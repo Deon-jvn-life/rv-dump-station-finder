@@ -1,0 +1,719 @@
+[
+ {
+  "type": "node",
+  "id": 2788303522,
+  "lat": 27.6696712,
+  "lon": -82.3824412,
+  "tags": {
+   "amenity": "sanitary_dump_station"
+  },
+  "_rev": {
+   "display": "Hillsborough County, Florida, United States",
+   "name": "",
+   "cat": "highway",
+   "type": "unclassified",
+   "city": null,
+   "county": "Hillsborough County",
+   "road": null,
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 3273850796,
+  "lat": 29.3592754,
+  "lon": -81.734589,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "Northeast 142nd Place Road, Salt Springs, Marion County, Florida, 32139, United States",
+   "name": "Northeast 142nd Place Road",
+   "cat": "highway",
+   "type": "tertiary",
+   "city": "Salt Springs",
+   "county": "Marion County",
+   "road": "Northeast 142nd Place Road",
+   "house": null,
+   "postcode": "32139"
+  }
+ },
+ {
+  "type": "node",
+  "id": 3312740731,
+  "lat": 24.6586953,
+  "lon": -81.2770194,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes",
+   "water_point": "yes"
+  },
+  "_rev": {
+   "display": "Overseas Highway, Monroe County, Florida, United States",
+   "name": "Overseas Highway",
+   "cat": "highway",
+   "type": "trunk",
+   "city": null,
+   "county": "Monroe County",
+   "road": "Overseas Highway",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 3362074845,
+  "lat": 25.9922679,
+  "lon": -81.595252,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "San Marco Road, Royal Palm Hammock, Goodland, Collier County, Florida, United States",
+   "name": "San Marco Road",
+   "cat": "highway",
+   "type": "secondary",
+   "city": "Goodland",
+   "county": "Collier County",
+   "road": "San Marco Road",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 3369114580,
+  "lat": 27.6347264,
+  "lon": -82.7188745,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "Fort DeSoto Recreational Trail, Pinellas County, Florida, United States",
+   "name": "Fort DeSoto Recreational Trail",
+   "cat": "highway",
+   "type": "path",
+   "city": null,
+   "county": "Pinellas County",
+   "road": "Fort DeSoto Recreational Trail",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 3369114581,
+  "lat": 27.6350092,
+  "lon": -82.7201739,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "Fort DeSoto Recreational Trail, Pinellas County, Florida, United States",
+   "name": "Fort DeSoto Recreational Trail",
+   "cat": "highway",
+   "type": "path",
+   "city": null,
+   "county": "Pinellas County",
+   "road": "Fort DeSoto Recreational Trail",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 3386062407,
+  "lat": 29.7212232,
+  "lon": -84.7451591,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "Gulf Beach Drive East, Franklin County, Florida, 32320, United States",
+   "name": "Gulf Beach Drive East",
+   "cat": "highway",
+   "type": "unclassified",
+   "city": null,
+   "county": "Franklin County",
+   "road": "Gulf Beach Drive East",
+   "house": null,
+   "postcode": "32320"
+  }
+ },
+ {
+  "type": "node",
+  "id": 3396705592,
+  "lat": 29.7804668,
+  "lon": -85.4066872,
+  "tags": {
+   "amenity": "sanitary_dump_station"
+  },
+  "_rev": {
+   "display": "Gulf County, Florida, United States",
+   "name": "",
+   "cat": "highway",
+   "type": "residential",
+   "city": null,
+   "county": "Gulf County",
+   "road": null,
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 3397061680,
+  "lat": 29.7714879,
+  "lon": -85.4058118,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "Cape San Blas Road, Gulf County, Florida, United States",
+   "name": "Cape San Blas Road",
+   "cat": "highway",
+   "type": "tertiary",
+   "city": null,
+   "county": "Gulf County",
+   "road": "Cape San Blas Road",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 3461829253,
+  "lat": 27.243329,
+  "lon": -82.3139958,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "Park Drive, Sarasota County, Florida, 34233, United States",
+   "name": "Park Drive",
+   "cat": "highway",
+   "type": "residential",
+   "city": null,
+   "county": "Sarasota County",
+   "road": "Park Drive",
+   "house": null,
+   "postcode": "34233"
+  }
+ },
+ {
+  "type": "node",
+  "id": 3461842593,
+  "lat": 25.1366366,
+  "lon": -80.9402177,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes",
+   "water_point": "yes"
+  },
+  "_rev": {
+   "display": "Flamingo Lodge Highway, Monroe County, Florida, United States",
+   "name": "Flamingo Lodge Highway",
+   "cat": "highway",
+   "type": "secondary",
+   "city": null,
+   "county": "Monroe County",
+   "road": "Flamingo Lodge Highway",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 3461842594,
+  "lat": 25.1385341,
+  "lon": -80.9413921,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes",
+   "water_point": "yes"
+  },
+  "_rev": {
+   "display": "Flamingo Lodge Highway, Monroe County, Florida, United States",
+   "name": "Flamingo Lodge Highway",
+   "cat": "highway",
+   "type": "secondary",
+   "city": null,
+   "county": "Monroe County",
+   "road": "Flamingo Lodge Highway",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 3463265553,
+  "lat": 25.9922453,
+  "lon": -81.5952005,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "San Marco Road, Royal Palm Hammock, Goodland, Collier County, Florida, United States",
+   "name": "San Marco Road",
+   "cat": "highway",
+   "type": "secondary",
+   "city": "Goodland",
+   "county": "Collier County",
+   "road": "San Marco Road",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 3643553663,
+  "lat": 27.7411254,
+  "lon": -82.4699582,
+  "tags": {
+   "amenity": "sanitary_dump_station"
+  },
+  "_rev": {
+   "display": "E.G. Simmons Park Drive, Hillsborough County, Florida, 33570, United States",
+   "name": "E.G. Simmons Park Drive",
+   "cat": "highway",
+   "type": "residential",
+   "city": null,
+   "county": "Hillsborough County",
+   "road": "E.G. Simmons Park Drive",
+   "house": null,
+   "postcode": "33570"
+  }
+ },
+ {
+  "type": "node",
+  "id": 3786940761,
+  "lat": 28.1444415,
+  "lon": -82.2376027,
+  "tags": {
+   "amenity": "sanitary_dump_station"
+  },
+  "_rev": {
+   "display": "State Park Access Road, Hillsborough County, Florida, 33543, United States",
+   "name": "State Park Access Road",
+   "cat": "highway",
+   "type": "residential",
+   "city": null,
+   "county": "Hillsborough County",
+   "road": "State Park Access Road",
+   "house": null,
+   "postcode": "33543"
+  }
+ },
+ {
+  "type": "node",
+  "id": 4036349956,
+  "lat": 29.4886872,
+  "lon": -82.9736262,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "fee": "no",
+   "operator": "Manatee Springs SP",
+   "water_point": "yes"
+  },
+  "_rev": {
+   "display": "Manatee Springs Park Road, Levy County, Florida, 32692, United States",
+   "name": "Manatee Springs Park Road",
+   "cat": "highway",
+   "type": "service",
+   "city": null,
+   "county": "Levy County",
+   "road": "Manatee Springs Park Road",
+   "house": null,
+   "postcode": "32692"
+  }
+ },
+ {
+  "type": "node",
+  "id": 4478032470,
+  "lat": 26.6241802,
+  "lon": -81.9208639,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "fee": "yes",
+   "sanitary_dump_station:pump-out": "yes",
+   "waterway": "sanitary_dump_station"
+  },
+  "_rev": {
+   "display": "Coral Point Drive, Cape Coral, Lee County, Florida, 33990, United States",
+   "name": "Coral Point Drive",
+   "cat": "highway",
+   "type": "residential",
+   "city": "Cape Coral",
+   "county": "Lee County",
+   "road": "Coral Point Drive",
+   "house": null,
+   "postcode": "33990"
+  }
+ },
+ {
+  "type": "node",
+  "id": 5096538996,
+  "lat": 27.2619621,
+  "lon": -82.287141,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "name": "Blue Boy Dump",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "North Drive, Sarasota County, Florida, United States",
+   "name": "North Drive",
+   "cat": "highway",
+   "type": "unclassified",
+   "city": null,
+   "county": "Sarasota County",
+   "road": "North Drive",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 7348396832,
+  "lat": 24.6468477,
+  "lon": -81.3297071,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "Overseas Highway, Big Pine Key, Monroe County, Florida, United States",
+   "name": "Overseas Highway",
+   "cat": "highway",
+   "type": "trunk",
+   "city": "Big Pine Key",
+   "county": "Monroe County",
+   "road": "Overseas Highway",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 7349656235,
+  "lat": 24.6726082,
+  "lon": -81.2464734,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "Monroe County, Florida, United States",
+   "name": "",
+   "cat": "highway",
+   "type": "residential",
+   "city": null,
+   "county": "Monroe County",
+   "road": null,
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 7351008602,
+  "lat": 24.8405948,
+  "lon": -80.7929997,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "Gulf Shore Boulevard, Monroe County, Florida, 33001, United States",
+   "name": "Gulf Shore Boulevard",
+   "cat": "highway",
+   "type": "residential",
+   "city": null,
+   "county": "Monroe County",
+   "road": "Gulf Shore Boulevard",
+   "house": null,
+   "postcode": "33001"
+  }
+ },
+ {
+  "type": "node",
+  "id": 10544222259,
+  "lat": 25.8515856,
+  "lon": -80.9891535,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "water_point": "no"
+  },
+  "_rev": {
+   "display": "Tamiami Trail East, Collier County, Florida, United States",
+   "name": "Tamiami Trail East",
+   "cat": "highway",
+   "type": "primary",
+   "city": null,
+   "county": "Collier County",
+   "road": "Tamiami Trail East",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 10557718392,
+  "lat": 25.4016819,
+  "lon": -80.6550929,
+  "tags": {
+   "amenity": "sanitary_dump_station",
+   "water_point": "yes"
+  },
+  "_rev": {
+   "display": "Long Pine Key Road, Miami-Dade County, Florida, United States",
+   "name": "Long Pine Key Road",
+   "cat": "highway",
+   "type": "unclassified",
+   "city": null,
+   "county": "Miami-Dade County",
+   "road": "Long Pine Key Road",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 10573169563,
+  "lat": 28.9806143,
+  "lon": -81.5546411,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "fee": "no",
+   "sanitary_dump_station:round_drain": "yes"
+  },
+  "_rev": {
+   "display": "Nfs 536, Johnsons Corner, Lake County, Florida, 32767, United States",
+   "name": "Nfs 536",
+   "cat": "highway",
+   "type": "residential",
+   "city": "Johnsons Corner",
+   "county": "Lake County",
+   "road": "Nfs 536",
+   "house": null,
+   "postcode": "32767"
+  }
+ },
+ {
+  "type": "node",
+  "id": 11429871163,
+  "lat": 24.5717862,
+  "lon": -81.7331319,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "water_point": "yes"
+  },
+  "_rev": {
+   "display": "MacDonald Avenue, Stock Island, Monroe County, Florida, 33040, United States",
+   "name": "MacDonald Avenue",
+   "cat": "highway",
+   "type": "track",
+   "city": "Stock Island",
+   "county": "Monroe County",
+   "road": "MacDonald Avenue",
+   "house": null,
+   "postcode": "33040"
+  }
+ },
+ {
+  "type": "node",
+  "id": 12505434004,
+  "lat": 24.7411859,
+  "lon": -80.981539,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "water_point": "yes"
+  },
+  "_rev": {
+   "display": "Ocean Drive, Valhalla, Marathon, Monroe County, Florida, 33052, United States",
+   "name": "Ocean Drive",
+   "cat": "highway",
+   "type": "residential",
+   "city": "Marathon",
+   "county": "Monroe County",
+   "road": "Ocean Drive",
+   "house": null,
+   "postcode": "33052"
+  }
+ },
+ {
+  "type": "node",
+  "id": 12512986134,
+  "lat": 26.4371149,
+  "lon": -81.818475,
+  "tags": {
+   "amenity": "sanitary_dump_station"
+  },
+  "_rev": {
+   "display": "River Trail, Estero, Lee County, Florida, 33928, United States",
+   "name": "River Trail",
+   "cat": "highway",
+   "type": "footway",
+   "city": "Estero",
+   "county": "Lee County",
+   "road": "River Trail",
+   "house": null,
+   "postcode": "33928"
+  }
+ },
+ {
+  "type": "node",
+  "id": 12512986135,
+  "lat": 26.437008,
+  "lon": -81.8185074,
+  "tags": {
+   "amenity": "sanitary_dump_station"
+  },
+  "_rev": {
+   "display": "River Trail, Estero, Lee County, Florida, 33928, United States",
+   "name": "River Trail",
+   "cat": "highway",
+   "type": "footway",
+   "city": "Estero",
+   "county": "Lee County",
+   "road": "River Trail",
+   "house": null,
+   "postcode": "33928"
+  }
+ },
+ {
+  "type": "node",
+  "id": 12657189577,
+  "lat": 29.079051,
+  "lon": -81.5788646,
+  "tags": {
+   "access": "customers",
+   "amenity": "sanitary_dump_station",
+   "fee": "no"
+  },
+  "_rev": {
+   "display": "Loop A, Alexander Springs Day Use Area, Lake County, Florida, United States",
+   "name": "Loop A",
+   "cat": "highway",
+   "type": "service",
+   "city": "Alexander Springs Day Use Area",
+   "county": "Lake County",
+   "road": "Loop A",
+   "house": null,
+   "postcode": null
+  }
+ },
+ {
+  "type": "node",
+  "id": 12809714869,
+  "lat": 28.0093568,
+  "lon": -82.3017627,
+  "tags": {
+   "access": "yes",
+   "amenity": "sanitary_dump_station",
+   "charge": "10 USD",
+   "fee": "yes",
+   "opening_hours": "24/7",
+   "operator": "TA",
+   "water_point": "yes"
+  },
+  "_rev": {
+   "display": "CR 579, Thonotosassa, Hillsborough County, Florida, 33584, United States",
+   "name": "CR 579",
+   "cat": "highway",
+   "type": "secondary",
+   "city": "Thonotosassa",
+   "county": "Hillsborough County",
+   "road": "CR 579",
+   "house": null,
+   "postcode": "33584"
+  }
+ },
+ {
+  "type": "node",
+  "id": 12809714870,
+  "lat": 28.0099078,
+  "lon": -82.3039884,
+  "tags": {
+   "access": "yes",
+   "amenity": "sanitary_dump_station",
+   "charge": "10 USD",
+   "fee": "yes",
+   "opening_hours": "24/7",
+   "operator": "Flying J",
+   "payment:credit_cards": "yes",
+   "payment:debit_cards": "yes",
+   "water_point": "yes"
+  },
+  "_rev": {
+   "display": "Lazy Days Boulevard, Kennedy Hill, Brandon, Hillsborough County, Florida, 33584, United States",
+   "name": "Lazy Days Boulevard",
+   "cat": "highway",
+   "type": "residential",
+   "city": "Brandon",
+   "county": "Hillsborough County",
+   "road": "Lazy Days Boulevard",
+   "house": null,
+   "postcode": "33584"
+  }
+ },
+ {
+  "type": "node",
+  "id": 13384416546,
+  "lat": 29.3402819,
+  "lon": -81.0825195,
+  "tags": {
+   "amenity": "sanitary_dump_station"
+  },
+  "_rev": {
+   "display": "North Beach Street, Ormond Beach, Volusia County, Florida, 32174, United States",
+   "name": "North Beach Street",
+   "cat": "highway",
+   "type": "tertiary",
+   "city": "Ormond Beach",
+   "county": "Volusia County",
+   "road": "North Beach Street",
+   "house": null,
+   "postcode": "32174"
+  }
+ },
+ {
+  "type": "node",
+  "id": 13709652013,
+  "lat": 28.7996305,
+  "lon": -82.3815873,
+  "tags": {
+   "amenity": "sanitary_dump_station"
+  },
+  "_rev": {
+   "display": "Trail 10, Citrus County, Florida, 34452, United States",
+   "name": "Trail 10",
+   "cat": "highway",
+   "type": "service",
+   "city": null,
+   "county": "Citrus County",
+   "road": "Trail 10",
+   "house": null,
+   "postcode": "34452"
+  }
+ }
+]

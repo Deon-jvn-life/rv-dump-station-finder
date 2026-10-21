@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://rv-dump-station-finder.vercel.app/sitemap.xml
