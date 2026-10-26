@@ -4,7 +4,7 @@ import json,os,re,html as H,shutil,sys,struct,zlib
 HERE=os.path.dirname(os.path.abspath(__file__)); ROOT=os.path.dirname(HERE); OUT=os.path.join(ROOT,'site')
 D="26 October 2026"; BASE="https://rv-dump-station-finder.vercel.app"  # replace with real domain before deploy
 # Optional search-console tokens. A blank value omits that meta tag.
-VERIFY={"google-site-verification":"","msvalidate.01":""}
+VERIFY={"google-site-verification":"XA7XgB_UwrIRvQyNVsnWpSyTyaU6e3-v4g4RBw8RAVI","msvalidate.01":""}
 DISCLAIMER="For general information only. This independent site is not affiliated with any government or agency. Information can change and may contain errors; always confirm with the official source or facility before you act. Nothing here is legal or professional advice, and we accept no liability for decisions made using it."
 NEW="26 October 2026"
 S=dict(fsp="https://www.floridastateparks.org/stay-night",fdot="https://www.fdot.gov/maintenance/rest-area-app/restareainfo.shtm",
@@ -264,7 +264,7 @@ def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,rob
           '<meta property="og:image" content="'+img+'"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Florida RV Dump Stations">',
           '<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="'+e(title)+'"><meta name="twitter:description" content="'+e(desc)+'"><meta name="twitter:image" content="'+img+'"><meta name="twitter:image:alt" content="Florida RV Dump Stations">']
     for name,val in VERIFY.items():
-        if val: head.append('<meta name="'+e(name)+'" content="'+e(val)+'">')
+        if val: head.append('<meta name="'+e(name)+'" content="'+e(val)+'" />')
     if robots: head.append('<meta name="robots" content="'+e(robots)+'">')
     head.extend(ld(b) for b in blocks)
     head.append('<style>'+CSS+'</style><script defer src="/_vercel/insights/script.js"></script></head><body>')
