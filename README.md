@@ -11,4 +11,4 @@ Plain-HTML list of Florida RV dump stations by region, with fee, access, water, 
 Refresh OSM: POST to https://overpass-api.de/api/interpreter with
 `[out:json];area["ISO3166-2"="US-FL"]->.a;nwr["amenity"="sanitary_dump_station"](area.a);out center tags;`
 
-Last checked: 21 October 2026. Always call ahead.
+Last checked: 26 October 2026. Always call ahead.

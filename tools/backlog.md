@@ -7,7 +7,7 @@ Shipped 22 October 2026:
 Not shipped. Add only after an official page states the fact:
 
 - Florida State Parks, campers only versus open to non-campers. Park amenity pages often say a dump station exists and do not say whether a day visitor may use it. Needs a park-by-park read of floridastateparks.org, with a row only when the page states the access rule.
-- FDOT rest area and welcome center directory. The public facility list and the fdotRestFacilities layer have no dump-station field (checked 22 October 2026). A facility-by-facility page would mostly repeat that absence. Worth doing only if FDOT later publishes a dump amenity or a facility page states one.
+- Florida Department of Transportation rest area and welcome center directory. The public facility list and the fdotRestFacilities layer have no dump-station field (checked 26 October 2026). A facility-by-facility page would mostly repeat that absence. Worth doing only if the department later publishes a dump amenity or a facility page states one.
 - More operator-confirmed stations: other travel-center chains, county parks, Corps of Engineers campgrounds, and national forest campgrounds, each from that operator's own page.
 - City or county public-works dump stations, one row per page that states the station, the fee, and who may use it.
 - A septage or portable-restroom service directory, only if the Department of Environmental Protection publishes a current list of service permits. Do not compile one from ads.

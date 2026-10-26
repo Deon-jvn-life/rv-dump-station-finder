@@ -2,16 +2,16 @@
 """Build the Florida RV dump stations static site from JSON in tools/ into site/."""
 import json,os,re,html as H,shutil,sys,struct,zlib
 HERE=os.path.dirname(os.path.abspath(__file__)); ROOT=os.path.dirname(HERE); OUT=os.path.join(ROOT,'site')
-D="21 October 2026"; BASE="https://rv-dump-station-finder.vercel.app"  # replace with real domain before deploy
+D="26 October 2026"; BASE="https://rv-dump-station-finder.vercel.app"  # replace with real domain before deploy
 # Optional search-console tokens. A blank value omits that meta tag.
 VERIFY={"google-site-verification":"","msvalidate.01":""}
 DISCLAIMER="For general information only. This independent site is not affiliated with any government or agency. Information can change and may contain errors; always confirm with the official source or facility before you act. Nothing here is legal or professional advice, and we accept no liability for decisions made using it."
-NEW="24 October 2026"
+NEW="26 October 2026"
 S=dict(fsp="https://www.floridastateparks.org/stay-night",fdot="https://www.fdot.gov/maintenance/rest-area-app/restareainfo.shtm",
  fdotlist="https://www.fdot.gov/maintenance/rest-area-app/rest-facilities-list",osm="https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dsanitary_dump_station",
  osmc="https://www.openstreetmap.org/copyright",overpass="https://overpass-api.de/",fspres="https://www.floridastateparks.org/stay-night",
  rainbow="https://www.floridastateparks.org/parks-and-trails/rainbow-springs-state-park/experiences-amenities",
- anastasia="https://www.floridastateparks.org/parks-and-trails/anastasia-state-park/experiences-amenities",loves="https://www.loves.com/locations",
+ anastasia="https://www.floridastateparks.org/parks-and-trails/anastasia-state-park/experiences-amenities",loves="https://www.loves.com/location-and-fuel-price-search",
  s51308="https://www.flsenate.gov/Laws/Statutes/2026/0513.08",s51301="https://www.flsenate.gov/Laws/Statutes/2026/0513.01",
  s403413="https://www.flsenate.gov/Laws/Statutes/2026/403.413",s403161="https://www.flsenate.gov/Laws/Statutes/2026/0403.161",
  s38601="https://www.flsenate.gov/Laws/Statutes/2026/0386.01",s386041="https://www.flsenate.gov/Laws/Statutes/2026/0386.041",
@@ -237,8 +237,7 @@ def verify_site():
     sm=open(os.path.join(OUT,'sitemap.xml')).read()
     assert sm.count('<url>')==len(htmls)-1
     assert BASE+'/disclaimer/</loc>' in sm and '404' not in sm
-    assert '<lastmod>2026-10-24</lastmod>' in sm
-    assert sm.count('<lastmod>2026-10-22</lastmod>')==len(htmls)-2
+    assert sm.count('<lastmod>'+iso_date(D)+'</lastmod>')==len(htmls)-1
     assert png_size(os.path.join(OUT,'og.png'))==(1200,630)
     assert png_size(os.path.join(OUT,'apple-touch-icon.png'))==(180,180)
     svg=open(os.path.join(OUT,'favicon.svg')).read()
@@ -247,7 +246,7 @@ def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,rob
     when=checked or D
     check_meta(path,title,desc)
     if not crumbs: raise SystemExit('missing breadcrumbs for '+path)
-    canon=canon_for(path); SM[path]=sitemap or '2026-10-22'
+    canon=canon_for(path); SM[path]=sitemap or iso_date(when)
     nav='<a href="/">Home</a>'+''.join(f'<a href="/regions/{k}/">{n}</a>' for k,(n,_) in REG.items())+'<a href="/fees/">Fees</a><a href="/rules/">Dumping rules</a>'
     blocks=[]
     if path=='index.html':
@@ -326,13 +325,13 @@ fb=f'''<h1>Florida RV dump station fees and access</h1><p>Most sources do not pu
 <h2>Fees that a source states</h2><div class="wrap"><table><tr><th>Station</th><th>County</th><th>Fee</th><th>Who can use it</th><th>Verification</th></tr>'''+''.join(f'<tr><td>{H.escape(x["name"])}</td><td>{x["county"]}</td><td>{H.escape(x["fee"])}</td><td>{H.escape(x["access"])}</td><td>{x["level"]} <span class="src">[<a href="{x["source"]}" rel="noopener">source</a>]</span></td></tr>' for x in fr)+f'''</table></div>
 <p>{len(recs)-len(fr)} of {len(recs)} stations: fee not stated by source.</p>
 <h2>Access summary</h2><div class="card"><ul>
-<li>Florida State Parks dump stations are described as campground amenities. Anastasia says free for park campers{src('anastasia')}. Day-visitor use is not stated on the other park pages we read. State park camping reservations: 800-326-3521{src('fspres')}.</li>
+<li>Florida State Parks dump stations are described as campground amenities. Anastasia says free for park campers{src('anastasia')}. Day-visitor use is not stated on the other park pages we read. Rainbow Springs says a day-use reservation program began on April 29, 2026, and that all visitors need a reservation to enter the park. That page does not say a day visitor may use the dump station{src('rainbow')}. State park camping reservations: 800-326-3521{src('fspres')}.</li>
 <li>Love's lists RV Dump Service among amenities at the four Florida locations we checked; price not stated on the location page{src('loves')}.</li>
 <li>FDOT rest areas: no dump stations stated{src('fdot')}.</li>
 <li>OpenStreetMap access tags: {sum(1 for x in recs if x['access'].startswith('Customers'))} customers only, {sum(1 for x in recs if x['access'].startswith('Public'))} public, rest not stated{src('osm')}.</li></ul></div>
 <p>For the statute and the Department of Health rule on where a tank may be emptied, see <a href="/rules/">where you can and cannot dump</a>.</p>'''
 page('fees/index.html',"Florida RV dump station fees and access, with sources",fb,"Which Florida RV dump stations state a fee, who may use them, and how access is described on operator pages and OpenStreetMap tags.",crumbs=[("Home",BASE+"/"),("Fees",BASE+"/fees/")])
-RULES_D="22 October 2026"
+RULES_D="26 October 2026"
 rb=f"""<h1>Where you can and cannot dump RV waste in Florida</h1>
 <p>Florida law limits where a recreational vehicle may empty black water, grey water, or any other liquid waste. This page quotes the statute, the Department of Health park rule, the Florida Litter Law, the sanitary-nuisance statute, the pollution statute, and the FDOT rest-area rule. It is an unofficial reading of those public texts, not legal advice and not a statement by any agency. Read the linked sections.</p>
 <p>The facts on this page come from the official sources linked below. This page does not use OpenStreetMap or any other community listing.</p>
@@ -366,7 +365,7 @@ rb=f"""<h1>Where you can and cannot dump RV waste in Florida</h1>
 <h2>FDOT rest areas, welcome centers, and service plazas</h2>
 <div class="card">
 <p>FDOT Rule 14-28.002, F.A.C., effective 5 December 2018, is titled Public Use of Rest Areas and Welcome Centers, Truck Comfort Stations, and Wayside Parks. The rule text posted by FDOT does not mention a sanitary dump station. It prohibits camping. Parking at rest areas and welcome centers is limited to three hours, except for commercial motor vehicle operators and persons permitted under Rule 14-28.005. For commercial motor vehicle operators subject to hours-of-service regulations, parking is limited to ten hours. The rule says no person shall hook up a vehicle to electrical and water outlets. Bottles, broken glass, ashes, waste paper, or other rubbish shall be left only at places provided for disposal.{src('r1428','r1428pdf')}</p>
-<p>On 22 October 2026 the FDOT rest area information page did not mention dump stations. It repeats the three-hour stay and the ban on overnight camping. The public rest-facility list is built from the FDOT map service fdotRestFacilities, layer fdotAMFacilities. That layer's amenity fields are Full Facility, Nighttime Security, Family Restroom, Adult Changing Table, Fenced Dog Area, Sun Pass Kiosk, Vending Machines, and ATM. There is no dump-station field. The facility-list page offers those same amenities in its filter and does not offer a dump station.{src('fdot','fdotlist','fdotgis')}</p>
+<p>On 26 October 2026 the Florida Department of Transportation rest area information page did not mention dump stations. It repeats the three-hour stay and the ban on overnight camping. The public rest-facility list is built from the Florida Department of Transportation map service fdotRestFacilities, layer fdotAMFacilities. That layer's amenity fields are Full Facility, Nighttime Security, Family Restroom, Adult Changing Table, Fenced Dog Area, Sun Pass Kiosk, Vending Machines, and ATM (automated teller machine). There is no dump-station field. The facility-list page filter offers Full Facilities, Nighttime Security, Family Restrooms, Adult Changing Tables, Dog Park Areas, Sun Pass Kiosks, Vending Machines, and ATMs (automated teller machines). It does not offer a dump station.{src('fdot','fdotlist','fdotgis')}</p>
 </div>
 <h2>When no dump station is close</h2>
 <div class="card"><ol>
@@ -378,7 +377,7 @@ rb=f"""<h1>Where you can and cannot dump RV waste in Florida</h1>
 </ol>
 <p><a href="/">Stations by region</a> | <a href="/fees/">Fees and who can use a station</a></p>
 </div>
-<h2>Official sources read on 22 October 2026</h2>
+<h2>Official sources read on 26 October 2026</h2>
 <div class="card"><ul>
 <li><a href="{S['s51308']}" rel="noopener">Section 513.08, Florida Statutes, Disposal of sewage</a> (2026)</li>
 <li><a href="{S['s51301']}" rel="noopener">Section 513.01, Florida Statutes, Definitions</a>, including "Department"</li>
@@ -416,7 +415,7 @@ db='''<h1>Disclaimer</h1>
 <h2>Contact and corrections</h2>
 <p>This site does not publish a contact email or a correction form. To check a listing, open the source link on that row and confirm it with the facility. Each page shows the date it was last checked.</p>
 <p><a href="/">Stations by region</a> | <a href="/fees/">Fees and access</a> | <a href="/rules/">Dumping rules</a></p>'''
-page('disclaimer/index.html',"Full disclaimer for this Florida RV dump station guide",db,"Disclaimer for this independent Florida RV dump station guide: accuracy, no warranty, liability limits, external links, affiliation and official sources.",NEW,crumbs=[("Home",BASE+"/"),("Disclaimer",BASE+"/disclaimer/")],sitemap="2026-10-24")
+page('disclaimer/index.html',"Full disclaimer for this Florida RV dump station guide",db,"Disclaimer for this independent Florida RV dump station guide: accuracy, no warranty, liability limits, external links, affiliation and official sources.",NEW,crumbs=[("Home",BASE+"/"),("Disclaimer",BASE+"/disclaimer/")])
 nb='''<h1>Page not found</h1>
 <p>That address is not a page on this guide.</p>
 <ul class="grid">
