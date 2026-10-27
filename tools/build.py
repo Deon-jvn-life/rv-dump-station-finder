@@ -58,6 +58,7 @@ for e in osm:
       source=f"https://www.openstreetmap.org/node/{e['id']}",level="Community (OpenStreetMap)",region=region(county)))
 json.dump(recs,open(os.path.join(HERE,'stations_merged.json'),'w'),indent=1)
 CSS=open(os.path.join(HERE,'style.css')).read()
+NAV=open(os.path.join(HERE,'nav.js')).read()
 MONTHS={"January":"01","February":"02","March":"03","April":"04","May":"05","June":"06","July":"07","August":"08","September":"09","October":"10","November":"11","December":"12"}
 WARNS=0
 SM={}
@@ -91,7 +92,7 @@ Z 11111 00001 00010 00100 01000 10000 11111
 """
 FONT={line.split()[0]:line.split()[1:] for line in _F.strip().splitlines()}
 FONT[' ']=['00000']*7
-FAVICON='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><title>Florida RV Dump Stations</title><rect width="32" height="32" rx="7" fill="#0b4f6c"/><path fill="#ffffff" d="M16 5c-4.1 0-7.4 3.2-7.4 7.3 0 5.5 7.4 14.2 7.4 14.2s7.4-8.7 7.4-14.2C23.4 8.2 20.1 5 16 5zm0 10.2a2.9 2.9 0 1 1 0-5.8 2.9 2.9 0 0 1 0 5.8z"/></svg>\n'
+FAVICON='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><title>Florida RV Dump Stations</title><rect width="32" height="32" rx="7" fill="#12352C"/><path fill="#ffffff" d="M16 5c-4.1 0-7.4 3.2-7.4 7.3 0 5.5 7.4 14.2 7.4 14.2s7.4-8.7 7.4-14.2C23.4 8.2 20.1 5 16 5zm0 10.2a2.9 2.9 0 1 1 0-5.8 2.9 2.9 0 0 1 0 5.8z"/></svg>\n'
 def iso_date(s):
     d,mon,y=s.split()
     return y+'-'+MONTHS[mon]+'-'+f'{int(d):02d}'
@@ -166,14 +167,14 @@ def write_png(path,w,h,buf):
     png=b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',w,h,8,2,0,0,0))+chunk(b'IDAT',zlib.compress(bytes(raw),9))+chunk(b'IEND',b'')
     open(path,'wb').write(png)
 def render_og():
-    w,h=1200,630; teal=(0x0b,0x4f,0x6c); white=(255,255,255); mist=(0xd6,0xec,0xf5)
+    w,h=1200,630; teal=(0x12,0x35,0x2c); white=(255,255,255); mist=(0xf4,0xf0,0xe6)
     buf=new_canvas(w,h,teal)
     draw_pin(buf,w,h,600,190,90,white,teal)
     draw_centered(buf,w,h,"FLORIDA RV DUMP STATIONS",410,6,white)
     draw_centered(buf,w,h,"SOURCED LIST BY REGION",478,4,mist)
     return w,h,buf
 def render_icon():
-    w=h=180; teal=(0x0b,0x4f,0x6c); buf=new_canvas(w,h,teal)
+    w=h=180; teal=(0x12,0x35,0x2c); buf=new_canvas(w,h,teal)
     draw_pin(buf,w,h,90,72,50, (255,255,255), teal)
     return w,h,buf
 def assets():
@@ -227,8 +228,14 @@ def verify_site():
             assert 'Short FAQ' not in text
         expect=canon_for(rel)
         assert 'rel="canonical" href="'+expect+'"' in text, (rel, expect)
+        assert 'Independent guide. Not a government website.' in text, rel
+        assert 'src="/_vercel/insights/script.js"' in text, rel
+        assert "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" in text, rel
+        assert 'scroll-margin-top:var(--scroll-pad)' in text, rel
+        assert 'id="read-next"' in text, rel
+        assert 'id="q"' in text, rel
         for href in re.findall(r'href="([^"]*)"', text):
-            if href.startswith('http://') or href.startswith('https://') or href.startswith('mailto:'): continue
+            if href.startswith('http://') or href.startswith('https://') or href.startswith('mailto:') or href.startswith('#'): continue
             assert href.startswith('/') and 'index.html' not in href and not href.endswith('.html'), (rel, href)
         if VERIFY.get('google-site-verification'): assert VERIFY['google-site-verification'] in text
         else: assert 'google-site-verification' not in text
@@ -242,21 +249,251 @@ def verify_site():
     assert png_size(os.path.join(OUT,'apple-touch-icon.png'))==(180,180)
     svg=open(os.path.join(OUT,'favicon.svg')).read()
     assert svg.strip().startswith('<svg') and '\u2014' not in svg and '\u2013' not in svg
+    check_contrast()
+    check_links()
+def _lin(rgb):
+    def f(c):
+        c=c/255
+        return c/12.92 if c<=0.04045 else ((c+0.055)/1.055)**2.4
+    r,g,b=[f(c) for c in rgb]
+    return 0.2126*r+0.7152*g+0.0722*b
+def _contrast(a,b):
+    hi,lo=max(_lin(a),_lin(b)),min(_lin(a),_lin(b))
+    return (hi+0.05)/(lo+0.05)
+def _hex(h):
+    h=h.lstrip('#')
+    return tuple(int(h[i:i+2],16) for i in (0,2,4))
+def _srgb_lin(c):
+    c=c/255
+    return c/12.92 if c<=0.04045 else ((c+0.055)/1.055)**2.4
+def _lin_srgb(c):
+    v=12.92*c if c<=0.0031308 else 1.055*(max(c,0)**(1/2.4))-0.055
+    return max(0,min(255,round(v*255)))
+def _oklab(rgb):
+    R,G,B=[_srgb_lin(c) for c in rgb]
+    l=0.4122214708*R+0.5363325363*G+0.0514459929*B
+    m=0.2119034982*R+0.6806995451*G+0.1073969566*B
+    s=0.0883024619*R+0.2817188376*G+0.6299787005*B
+    l_,m_,s_=l**(1/3),m**(1/3),s**(1/3)
+    return (0.2104542553*l_+0.7936177850*m_-0.0040720468*s_,1.9779984951*l_-2.4285922050*m_+0.4505937099*s_,0.0259040371*l_+0.7827717662*m_-0.8086757660*s_)
+def _oklab_rgb(Lab):
+    L,a,b=Lab
+    l_=L+0.3963377774*a+0.2158037573*b
+    m_=L-0.1055613458*a-0.0638541728*b
+    s_=L-0.0894841775*a-1.2914855480*b
+    l,m,s=l_**3,m_**3,s_**3
+    R=4.0767416621*l-3.3077115913*m+0.2309699292*s
+    G=-1.2684380046*l+2.6097574011*m-0.3413193965*s
+    B=-0.0041960863*l-0.7034186147*m+1.7076147010*s
+    return tuple(_lin_srgb(c) for c in (R,G,B))
+def check_contrast():
+    white=(255,255,255)
+    stops=[_hex(h) for h in ('12352C','3D2A1C','1A3330')]
+    for i in range(len(stops)-1):
+        for space in ('srgb','oklab'):
+            for step in range(9):
+                t=step/8
+                if space=='srgb':
+                    rgb=tuple(round(stops[i][k]*(1-t)+stops[i+1][k]*t) for k in range(3))
+                else:
+                    A,B=_oklab(stops[i]),_oklab(stops[i+1])
+                    rgb=_oklab_rgb(tuple(A[k]*(1-t)+B[k]*t for k in range(3)))
+                ratio=_contrast(white,rgb)
+                if ratio<4.5:
+                    raise SystemExit(f'Header gradient contrast {ratio:.2f} at {space} t={t:.2f}')
+    for s in stops:
+        mix=tuple(round(c+0.14*(255-c)) for c in s)
+        if _contrast(white,mix)<4.5:
+            raise SystemExit('Chip highlight contrast failed')
+        if _contrast(_hex('F0D48A'),s)<3:
+            raise SystemExit('Gold indicator contrast failed')
+    pairs=[('#1C1915','#F4F0E6',4.5),('#1C1915','#ffffff',4.5),('#083656','#F4F0E6',4.5),('#083656','#ffffff',4.5),
+           ('#4C2A6E','#F4F0E6',4.5),('#4C2A6E','#ffffff',4.5),('#1A140C','#F3D48A',4.5),('#1C1915','#fff8ec',4.5),
+           ('#1C1915','#eef4f1',4.5),('#1C1915','#dff3e4',4.5),('#1C1915','#fdebd3',4.5),('#1C1915','#e7efe9',4.5),
+           ('#143024','#e5f2ea',4.5),('#3e3a34','#F4F0E6',4.5),('#3e3a34','#ffffff',4.5),('#ffffff','#14241C',4.5)]
+    for fg,bg,minimum in pairs:
+        ratio=_contrast(_hex(fg),_hex(bg))
+        if ratio<minimum:
+            raise SystemExit(f'Contrast {ratio:.2f} below {minimum} for {fg} on {bg}')
+def check_links():
+    htmls={}
+    for dp,_,fs in os.walk(OUT):
+        for f in fs:
+            if f.endswith('.html'):
+                rel=os.path.relpath(os.path.join(dp,f),OUT)
+                htmls[rel]=open(os.path.join(OUT,rel),encoding='utf-8').read()
+    missing=[]
+    def idset(text):
+        return set(re.findall(r'\bid="([^"]*)"', text))
+    for rel,text in htmls.items():
+        found=re.findall(r'\bid="([^"]*)"', text)
+        if len(found)!=len(set(found)):
+            missing.append(rel+' duplicate ids '+', '.join(sorted({i for i in found if found.count(i)>1})))
+        ids=set(found)
+        for href_v in re.findall(r'\bhref="([^"]*)"', text):
+            if href_v.startswith(('http://','https://','mailto:','tel:')): continue
+            url,_,frag=href_v.partition('#')
+            if url=='':
+                if frag and frag not in ids: missing.append(f'{rel} -> {href_v}')
+                continue
+            if not url.startswith('/'):
+                missing.append(f'{rel} bad {href_v}'); continue
+            path=url.lstrip('/')
+            target='index.html' if path=='' else (path+'index.html' if path.endswith('/') else path)
+            dest_text=htmls.get(target)
+            if dest_text is None:
+                fp=os.path.join(OUT, target if not path.endswith('/') else path[:-1])
+                alt=os.path.join(OUT, path if not path.endswith('/') else target)
+                if os.path.isfile(os.path.join(OUT, path)) or os.path.isfile(os.path.join(OUT, target)):
+                    if frag:
+                        raw=open(os.path.join(OUT, target),encoding='utf-8').read() if os.path.isfile(os.path.join(OUT, target)) else ''
+                        if frag and frag not in idset(raw): missing.append(f'{rel} -> {href_v}')
+                    continue
+                missing.append(f'{rel} -> {href_v}'); continue
+            if frag and frag not in idset(dest_text):
+                missing.append(f'{rel} -> {href_v}')
+    if missing:
+        raise SystemExit('Link check failed:\n'+'\n'.join(missing))
+def slug(t):
+    t=H.unescape(re.sub(r'<[^>]+>','',t))
+    return re.sub(r'[^a-z0-9]+','-',t.lower()).strip('-')
+def page_href(path):
+    if path in ('index.html','/'): return '/'
+    if path=='404.html': return '/404/'
+    if path.endswith('/index.html'): return '/'+path[:-len('index.html')]
+    return '/'+path
+GROUPS=[
+ ("Find a station",[
+  ("regions/panhandle/index.html","Panhandle"),
+  ("regions/north/index.html","North Florida"),
+  ("regions/central/index.html","Central Florida"),
+  ("regions/tampa-bay-southwest/index.html","Tampa Bay and Southwest"),
+  ("regions/southeast-keys/index.html","Southeast and Keys")]),
+ ("Fees and rules",[
+  ("fees/index.html","Fees and access"),
+  ("rules/index.html","Dumping rules")]),
+ ("About this guide",[
+  ("disclaimer/index.html","Disclaimer"),
+  ("find/index.html","All pages")])]
+GROUP_OF={p:g for g,items in GROUPS for p,_t in items}
+TITLES={p:t for g,items in GROUPS for p,t in items}
+TITLES['index.html']='Home'
+TITLES['404.html']='Page not found'
+ORDER=["regions/panhandle/index.html","regions/north/index.html","regions/central/index.html","regions/tampa-bay-southwest/index.html","regions/southeast-keys/index.html"]
+READ_NEXT={
+ "index.html":["regions/tampa-bay-southwest/index.html","fees/index.html","rules/index.html"],
+ "regions/panhandle/index.html":["regions/north/index.html","fees/index.html","rules/index.html"],
+ "regions/north/index.html":["regions/central/index.html","fees/index.html","rules/index.html"],
+ "regions/central/index.html":["regions/tampa-bay-southwest/index.html","fees/index.html","rules/index.html"],
+ "regions/tampa-bay-southwest/index.html":["regions/southeast-keys/index.html","fees/index.html","rules/index.html"],
+ "regions/southeast-keys/index.html":["fees/index.html","rules/index.html","regions/panhandle/index.html"],
+ "fees/index.html":["rules/index.html","regions/tampa-bay-southwest/index.html","disclaimer/index.html"],
+ "rules/index.html":["fees/index.html","index.html","disclaimer/index.html"],
+ "disclaimer/index.html":["rules/index.html","fees/index.html","find/index.html"],
+ "find/index.html":["index.html","fees/index.html","rules/index.html"],
+ "404.html":["index.html","find/index.html","rules/index.html"]}
+SUMMARIES={}
+KW={}
+VOID_TAGS={'area','base','br','col','embed','hr','img','input','link','meta','source','track','wbr'}
+def split_at_first_h2(body):
+    depth=0
+    for m in re.finditer(r'<(/?)([a-zA-Z0-9]+)([^>]*)>', body):
+        name=m.group(2).lower(); closing=m.group(1)=='/'; attrs=m.group(3) or ''
+        if name=='h2' and not closing and depth==0:
+            return body[:m.start()], body[m.start():]
+        if closing: depth=max(0, depth-1)
+        elif name not in VOID_TAGS and not attrs.rstrip().endswith('/'): depth+=1
+    return body,''
+def search_json():
+    rows=[{"u":"/","t":"Home","s":SUMMARIES.get("index.html",""),"g":"Home","k":KW.get("index.html","")}]
+    for g,items in GROUPS:
+        for p,t in items:
+            rows.append({"u":page_href(p),"t":t,"s":SUMMARIES.get(p,""),"g":g,"k":KW.get(p,"")})
+    return json.dumps(rows,ensure_ascii=False).replace("<","\\u003c")
+def topic_nav(path):
+    bits=[]
+    for g,items in GROUPS:
+        links=[]; here=False
+        for p,t in items:
+            cur=' aria-current="page"' if p==path else ''
+            cls=' class="is-current"' if p==path else ''
+            if p==path: here=True
+            links.append(f'<a href="{page_href(p)}"{cls}{cur}>{H.escape(t)}</a>')
+        mark=' aria-current="true"' if here else ''
+        bits.append(f'<details class="grp{" has-current" if here else ""}"><summary{mark}>{H.escape(g)}</summary><div class="glinks">'+''.join(links)+'</div></details>')
+    return ''.join(bits)
+def visible_crumbs(path):
+    if path=='index.html':
+        return '<nav class="crumbs" aria-label="Breadcrumb"><ol><li><span aria-current="page">Home</span></li></ol></nav>'
+    items=['<li><a href="/">Home</a></li>']
+    g=GROUP_OF.get(path)
+    if g: items.append(f'<li><a href="/#{slug(g)}">{H.escape(g)}</a></li>')
+    items.append(f'<li><span aria-current="page">{H.escape(TITLES.get(path,path))}</span></li>')
+    return '<nav class="crumbs" aria-label="Breadcrumb"><ol>'+''.join(items)+'</ol></nav>'
+def crumb_items(path):
+    items=[("Home", BASE+"/")]
+    if path!='index.html':
+        g=GROUP_OF.get(path)
+        if g: items.append((g, BASE+"/#"+slug(g)))
+        url=BASE+"/404/" if path=='404.html' else canon_for(path)
+        items.append((TITLES.get(path,path), url))
+    return items
+MARK='<svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="#ffffff" d="M16 5c-4.1 0-7.4 3.2-7.4 7.3 0 5.5 7.4 14.2 7.4 14.2s7.4-8.7 7.4-14.2C23.4 8.2 20.1 5 16 5zm0 10.2a2.9 2.9 0 1 1 0-5.8 2.9 2.9 0 0 1 0 5.8z"/></svg>'
+SEARCH_ICON='<svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
 def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,robots=None,sitemap=None):
     when=checked or D
     check_meta(path,title,desc)
-    if not crumbs: raise SystemExit('missing breadcrumbs for '+path)
     canon=canon_for(path); SM[path]=sitemap or iso_date(when)
-    nav='<a href="/">Home</a>'+''.join(f'<a href="/regions/{k}/">{n}</a>' for k,(n,_) in REG.items())+'<a href="/fees/">Fees</a><a href="/rules/">Dumping rules</a>'
+    summary=SUMMARIES.get(path,'')
+    if '<h1>' in body:
+        body=body.replace('<h1>','<h1 id="page-title">',1)
+    if summary and path!='404.html' and '</h1>' in body:
+        body=body.replace('</h1>','</h1><div class="inshort"><p><strong>In short.</strong> '+H.escape(summary)+'</p></div>',1)
+    body=re.sub(r'<h2>(.*?)</h2>', lambda m: f'<h2 id="{slug(m.group(1))}">{m.group(1)}</h2>', body)
+    h2s=re.findall(r'<h2 id="([^"]*)">(.*?)</h2>', body)
+    toc=''
+    if len(h2s)>=2:
+        lis=''.join(f'<li><a href="#{i}">{H.escape(H.unescape(re.sub(r"<[^>]+>","",inner)))}</a></li>' for i,inner in h2s)
+        toc=f'<nav class="toc" aria-label="On this page"><details class="toc-details" open><summary>On this page</summary><ul>{lis}</ul></details></nav>'
+    def step_link(target, kind):
+        label=TITLES.get(target)
+        if not label: return ''
+        word='Previous' if kind=='prev' else 'Next'
+        return f'<a class="{kind}" href="{page_href(target)}"><span class="pn-k">{word}</span><span class="pn-t">{H.escape(label)}</span></a>'
+    pn=''
+    if path in ORDER:
+        i=ORDER.index(path)
+        prev=step_link(ORDER[i-1],'prev') if i else ''
+        nxt=step_link(ORDER[i+1],'next') if i+1<len(ORDER) else ''
+        if prev or nxt:
+            pn='<nav class="pn" aria-label="Regions in order">'+prev+nxt+'</nav>'
+    rn=[]
+    for dest in READ_NEXT.get(path) or []:
+        label=TITLES.get(dest)
+        if not label: continue
+        blurb=SUMMARIES.get(dest,'')
+        blurb_html=f'<span class="ls">{H.escape(blurb)}</span>' if blurb else ''
+        rn.append(f'<li><a class="jump" href="{page_href(dest)}"><span class="lt">{H.escape(label)}</span>{blurb_html}</a></li>')
+    readnext='<aside class="readnext" aria-labelledby="read-next"><h2 id="read-next">Read next</h2><ul>'+''.join(rn)+'</ul></aside>' if rn else ''
+    head_html, rest = split_at_first_h2(body)
+    tail=pn+readnext
+    rest=(rest+tail) if rest else tail
+    if toc:
+        layout=f'<div class="layout has-toc">{toc}<div class="rest">{rest}</div></div>'
+    elif rest:
+        layout=f'<div class="layout"><div class="rest">{rest}</div></div>'
+    else:
+        layout=''
     blocks=[]
     if path=='index.html':
         blocks.append(website_ld(desc)); blocks.append(organization_ld())
     if article: blocks.append(article_ld(title,desc,canon,when))
-    blocks.append(crumb_ld(crumbs))
+    blocks.append(crumb_ld(crumb_items(path)))
     if faq: blocks.append(faq_ld(faq))
     og='article' if article and path not in ('index.html','404.html') else 'website'
     img=BASE+'/og.png'; e=H.escape
     head=['<!doctype html><html lang="en-US"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
+          '<meta name="theme-color" content="#12352C">',
           '<title>'+e(title)+'</title>','<meta name="description" content="'+e(desc)+'">','<link rel="canonical" href="'+e(canon)+'">',
           '<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">',
           '<meta property="og:type" content="'+og+'"><meta property="og:site_name" content="Florida RV Dump Stations"><meta property="og:locale" content="en_US">',
@@ -267,16 +504,39 @@ def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,rob
         if val: head.append('<meta name="'+e(name)+'" content="'+e(val)+'" />')
     if robots: head.append('<meta name="robots" content="'+e(robots)+'">')
     head.extend(ld(b) for b in blocks)
-    head.append('<style>'+CSS+'</style><script defer src="/_vercel/insights/script.js"></script></head><body>')
-    foot=('<footer><p><a href="/">Home</a> | <a href="/fees/">Fees and access</a> | <a href="/rules/">Dumping rules</a> | <a href="/disclaimer/">Disclaimer</a></p>'
-          '<p class="disclaimer">'+e(DISCLAIMER)+'</p><p>Independent, unofficial guide. Not affiliated with Florida State Parks, FDOT, the Florida Department of Health, the Florida Department of Environmental Protection, Love\'s or OpenStreetMap. Official listings are linked to the operator page they came from. Community listings come from OpenStreetMap contributors (data &copy; OpenStreetMap contributors, ODbL)'
-          +src('osmc')+'. Dump stations close, change rules and charge new fees without notice: always call ahead. Last checked: '+e(when)+'.</p></footer>')
-    h=''.join(head)+'<header><a href="/">Florida RV Dump Stations</a><nav>'+nav+'</nav></header><main><p class="checked">Last checked: '+e(when)+'</p><p class="disclaimer">'+e(DISCLAIMER)+'</p>'+body+'</main>'+foot+'</body></html>'
+    head.append('<style>'+CSS+'</style><script defer src="/_vercel/insights/script.js"></script></head>')
+    brand_cur=' aria-current="page"' if path=='index.html' else ''
+    header=(f'<div id="head-slot"><header id="site-header"><div class="shell">'
+        f'<div class="brand-block"><a class="brand" href="/"{brand_cur}>{MARK}<span class="name-main">Florida RV Dump Stations</span><span class="name-compact">Dump stations</span></a>'
+        f'<p class="name-sub">Independent guide. Not a government website.</p></div>'
+        f'<button type="button" class="search-toggle" aria-expanded="false" aria-controls="site-search">{SEARCH_ICON}<span class="search-toggle-text">Search</span></button>'
+        f'<div class="search-wrap" id="site-search"><form class="sitesearch" role="search" action="/find/" method="get">'
+        f'<label for="q">Search this guide</label><input id="q" name="q" type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">'
+        f'<button type="submit">Search</button></form>'
+        f'<div id="search-results" class="search-results" hidden role="region" aria-live="polite" aria-label="Matching pages"></div></div>'
+        f'<nav id="site-nav" class="top" aria-label="Topics">{topic_nav(path)}</nav>'
+        f'<span class="nav-fade nav-fade-left" aria-hidden="true"></span><span class="nav-fade nav-fade-right" aria-hidden="true"></span><span class="nav-hint" aria-hidden="true"></span>'
+        f'</div></header></div>')
+    def foot_a(href, text):
+        cur=' aria-current="page"' if page_href(path)==href else ''
+        return f'<a href="{href}"{cur}>{text}</a>'
+    foot=(f'<footer><div class="shell"><nav class="footnav" aria-label="About this guide">{foot_a("/","Home")}{foot_a("/fees/","Fees and access")}{foot_a("/rules/","Dumping rules")}{foot_a("/find/","All pages")}{foot_a("/disclaimer/","Disclaimer")}</nav>'
+          f'<p class="disclaimer">{e(DISCLAIMER)}</p><p>Independent, unofficial guide. Not affiliated with Florida State Parks, FDOT, the Florida Department of Health, the Florida Department of Environmental Protection, Love\'s or OpenStreetMap. Official listings are linked to the operator page they came from. Community listings come from OpenStreetMap contributors (data &copy; OpenStreetMap contributors, ODbL)'
+          +src('osmc')+f'. Dump stations close, change rules and charge new fees without notice: always call ahead. Last checked: {e(when)}.</p></div></footer>')
+    article_html=f'<article class="content" aria-labelledby="page-title"><div class="head-block">{head_html}</div>{layout}</article>'
+    main=(f'<main id="content" tabindex="-1"><div class="shell">{visible_crumbs(path)}'
+          f'<p class="meta"><span class="checked">Last checked: {e(when)}</span></p>'
+          f'<p class="disclaimer">{e(DISCLAIMER)}</p>{article_html}</div></main>')
+    scripts=f'<script type="application/json" id="search-data">{search_json()}</script><script>{NAV}</script>'
+    h=''.join(head)+'<body><a class="skip" href="#content">Skip to content</a>'+header+main+foot+scripts+'</body></html>'
     assert '\u2014' not in h and '\u2013' not in h, path
     p=os.path.join(OUT,path); os.makedirs(os.path.dirname(p) or OUT, exist_ok=True); open(p,'w').write(h)
 CALL='<div class="card note"><strong>Call ahead.</strong> Hours, fees, gate codes and who may use a station change often, and many park stations are for registered campers only. Confirm with the operator before you drive there.</div>'
 def table(rows):
-    t='<input id="q" placeholder="Filter by name, city or county" oninput="var v=this.value.toLowerCase();document.querySelectorAll(\'table tr\').forEach(function(r){if(r.querySelector(\'td\'))r.style.display=r.textContent.toLowerCase().indexOf(v)>-1?\'\':\'none\'})"><div class="wrap"><table><tr><th>Station</th><th>Address / city</th><th>Coordinates</th><th>Fee</th><th>Who can use it</th><th>Potable water</th><th>Hours / season</th><th>Verification</th></tr>'
+    t=('<div class="filter"><label for="station-filter">Filter by name, city or county</label>'
+       '<input id="station-filter" type="search" placeholder="Filter by name, city or county" autocomplete="off" '
+       'oninput="var v=this.value.toLowerCase();document.querySelectorAll(\'#station-table tr\').forEach(function(r){if(r.querySelector(\'td\'))r.style.display=r.textContent.toLowerCase().indexOf(v)>-1?\'\':\'none\'})">'
+       '</div><div class="wrap"><table id="station-table"><tr><th scope="col">Station</th><th scope="col">Address / city</th><th scope="col">Coordinates</th><th scope="col">Fee</th><th scope="col">Who can use it</th><th scope="col">Potable water</th><th scope="col">Hours / season</th><th scope="col">Verification</th></tr>')
     for x in sorted(rows,key=lambda x:(x['level'].startswith('Community'),x['county'],x['name'])):
         co=f'<a href="https://www.openstreetmap.org/?mlat={x["lat"]}&amp;mlon={x["lon"]}#map=17/{x["lat"]}/{x["lon"]}" rel="noopener">{x["lat"]:.5f}, {x["lon"]:.5f}</a>' if x['lat'] else 'Not stated by source'
         s=f'<a href="{x["source"]}" rel="noopener">source</a>'+(f', <a href="{x["source2"]}" rel="noopener">OSM</a>' if x.get('source2') else '')
@@ -296,11 +556,60 @@ faq=[("Can I dump at a Florida interstate rest area?",f"Not according to any FDO
 ("Are OpenStreetMap entries reliable?",f"They are community data{src('osm')}. Many Florida entries have no name, fee or access tags. We show them so you know where to look, flagged as Community, and they need a phone call to confirm."),
 ("Is there potable water at the dump?","Rarely stated by official sources. Where an OSM contributor tagged water_point we show it as an OSM tag. Never use the rinse hose for drinking water."),
 ("How current is this?",f"All records were collected on {D}. Each row links to its source so you can recheck.")]
+SUMMARIES['index.html']=f'{len(recs)} stations on {D}: {noff} confirmed on an official page, {ncom} community-mapped. Confirm with the operator before you drive there.'
+SUMMARIES['fees/index.html']='Most sources do not publish a dump fee. Below are the only fee statements we found, then a summary of access rules.'
+SUMMARIES['rules/index.html']='Florida law limits where a recreational vehicle may empty black water, grey water, or any other liquid waste. This is an unofficial reading of the public texts, not legal advice.'
+SUMMARIES['disclaimer/index.html']='Station names, locations, fees, access, hours and legal quotations on this site are taken from the linked public sources. Always confirm with the official source or the facility before you act.'
+SUMMARIES['find/index.html']='Every page on this guide, grouped by topic. Use the search box to narrow the list.'
+for k,(n,_cs) in REG.items():
+    place={'Panhandle':'the Panhandle','Southeast and Keys':'the Southeast and the Keys'}.get(n,n)
+    SUMMARIES[f'regions/{k}/index.html']=f'{cnt[k]} stations in {place}. Each row links to its source. Call ahead.'
+    rows=[x for x in recs if x['region']==k]
+    KW[f'regions/{k}/index.html']=' '.join(x['name']+' '+x['city']+' '+x['county']+' '+x.get('operator','') for x in rows)
+KW['index.html']=' '.join(c['name'] for c in checked)+' etiquette rest area openstreetmap verification call ahead'
+KW['rules/index.html']='rest area welcome center litter law statute grey water black water wastewater sanitary dump station health department transportation'
+KW['fees/index.html']='fee access campers loves love state park customers potable water'
+KW['disclaimer/index.html']='liability warranty affiliation accuracy corrections'
+KW['find/index.html']='index search all pages topics'
+def jump(path, label=None):
+    label=label or TITLES[path]
+    blurb=SUMMARIES.get(path,'')
+    extra=f'<span class="ls">{H.escape(blurb)}</span>' if blurb else ''
+    return f'<a class="jump" href="{page_href(path)}"><span class="lt">{H.escape(label)}</span>{extra}</a>'
+region_items=''.join(f'<li><a href="/regions/{k}/">{n}</a> ({cnt[k]} stations)</li>' for k,(n,_) in REG.items())
+topics_html=''
+for g,items in GROUPS:
+    lis=''.join(f'<li>{jump(p)}</li>' for p,_t in items)
+    topics_html+=f'<h3 id="topic-{slug(g)}">{H.escape(g)}</h3><ul class="link-grid">{lis}</ul>'
+GUIDE=f'''<h2>Start here</h2>
+<p>These groups follow a trip. Open the one that matches what you need to do.</p>
+<ol class="timeline">
+<li class="period"><h3 id="{slug("Find a station")}">Find a station</h3>
+<h2>Pick a region</h2><ul class="grid">{region_items}</ul></li>
+<li class="period"><h3 id="{slug("Fees and rules")}">Fees and rules</h3>
+<p><a href="/fees/">Dump station fees and who can use them</a></p>
+<p><a href="/rules/">Where you can and cannot dump RV waste in Florida</a></p></li>
+<li class="period"><h3 id="{slug("About this guide")}">About this guide</h3>
+<ul class="link-grid"><li>{jump("disclaimer/index.html")}</li><li>{jump("find/index.html")}</li></ul></li>
+</ol>
+<h2>Top tasks</h2>
+<p>The pages and sections people need most often.</p>
+<ul class="tasks">
+<li><a class="jump" href="#how-to-use-a-dump-station"><span class="lt">How to use a dump station</span><span class="ls">Six steps for emptying tanks at a station. Always follow posted signs at the station.</span></a></li>
+<li><a class="jump" href="/fees/"><span class="lt">Dump station fees and who can use them</span><span class="ls">{H.escape(SUMMARIES["fees/index.html"])}</span></a></li>
+<li><a class="jump" href="/rules/"><span class="lt">Where you can and cannot dump RV waste in Florida</span><span class="ls">{H.escape(SUMMARIES["rules/index.html"])}</span></a></li>
+<li><a class="jump" href="#etiquette"><span class="lt">Etiquette</span><span class="ls">Be quick when others are waiting. Never use the rinse hose to fill your fresh water tank.</span></a></li>
+<li><a class="jump" href="#short-faq"><span class="lt">Short FAQ</span><span class="ls">Rest areas, day visitors, gate codes, OpenStreetMap, drinking water, and how current this list is.</span></a></li>
+<li><a class="jump" href="#checked-no-dump-station-stated"><span class="lt">Checked, no dump station stated</span><span class="ls">Places checked where the source does not state a dump station.</span></a></li>
+<li>{jump("disclaimer/index.html")}</li>
+<li>{jump("find/index.html")}</li>
+</ul>
+<h2>All topics</h2>
+<p>Every page on this guide, grouped by topic.</p>
+{topics_html}'''
 body=f'''<h1>Florida RV dump stations: sourced list by region</h1>
 <p>A plain list of places in Florida where an RV can empty black and grey tanks, taken only from operator pages (Florida State Parks, Love's) and OpenStreetMap community data. {len(recs)} stations on {D}: {noff} confirmed on an official page, {ncom} community-mapped.</p>{CALL}
-<h2>Pick a region</h2><ul class="grid">'''+''.join(f'<li><a href="/regions/{k}/">{n}</a> ({cnt[k]} stations)</li>' for k,(n,_) in REG.items())+f'''</ul>
-<p><a href="/fees/">Dump station fees and who can use them</a></p>
-<p><a href="/rules/">Where you can and cannot dump RV waste in Florida</a></p>
+{GUIDE}
 <h2>How to use a dump station</h2><div class="card"><ol><li>Pull up so your sewer outlet is on the drain side. Set the parking brake.</li><li>Wear disposable gloves. Connect the sewer hose to your outlet first, then put the other end fully into the drain inlet and secure it.</li><li>Open the black tank valve first and let it empty completely.</li><li>Close it, then open the grey tank valve. Grey water helps flush the hose.</li><li>Close the valves, rinse the hose with the non-potable rinse water if provided, and drain it into the inlet.</li><li>Disconnect at the RV end first, rinse the area, and close the drain lid.</li></ol>
 <p class="src">General practice guidance, not from a single official source. Always follow posted signs at the station.</p></div>
 <h2>Etiquette</h2><div class="card"><ul><li>Be quick when others are waiting. Do tank flushing and hose cleaning at your site if you can.</li><li>Never use the rinse hose to fill your fresh water tank.</li><li>Leave the pad cleaner than you found it.</li><li>Pay any posted fee and respect campers-only signs.</li><li>Do not dump grey or black water anywhere other than an approved inlet. It is a health hazard.</li></ul></div>
@@ -322,7 +631,7 @@ for k,(n,cs) in REG.items():
     page(f'regions/{k}/index.html',rt,b,rd,crumbs=[("Home",BASE+"/"),(n,BASE+f"/regions/{k}/")])
 fr=[x for x in recs if x['fee']!='Not stated by source']
 fb=f'''<h1>Florida RV dump station fees and access</h1><p>Most sources do not publish a dump fee. Below are the only fee statements we found, then a summary of access rules.</p>{CALL}
-<h2>Fees that a source states</h2><div class="wrap"><table><tr><th>Station</th><th>County</th><th>Fee</th><th>Who can use it</th><th>Verification</th></tr>'''+''.join(f'<tr><td>{H.escape(x["name"])}</td><td>{x["county"]}</td><td>{H.escape(x["fee"])}</td><td>{H.escape(x["access"])}</td><td>{x["level"]} <span class="src">[<a href="{x["source"]}" rel="noopener">source</a>]</span></td></tr>' for x in fr)+f'''</table></div>
+<h2>Fees that a source states</h2><div class="wrap"><table><tr><th scope="col">Station</th><th scope="col">County</th><th scope="col">Fee</th><th scope="col">Who can use it</th><th scope="col">Verification</th></tr>'''+''.join(f'<tr><td>{H.escape(x["name"])}</td><td>{x["county"]}</td><td>{H.escape(x["fee"])}</td><td>{H.escape(x["access"])}</td><td>{x["level"]} <span class="src">[<a href="{x["source"]}" rel="noopener">source</a>]</span></td></tr>' for x in fr)+f'''</table></div>
 <p>{len(recs)-len(fr)} of {len(recs)} stations: fee not stated by source.</p>
 <h2>Access summary</h2><div class="card"><ul>
 <li>Florida State Parks dump stations are described as campground amenities. Anastasia says free for park campers{src('anastasia')}. Day-visitor use is not stated on the other park pages we read. Rainbow Springs says a day-use reservation program began on April 29, 2026, and that all visitors need a reservation to enter the park. That page does not say a day visitor may use the dump station{src('rainbow')}. State park camping reservations: 800-326-3521{src('fspres')}.</li>
@@ -416,6 +725,12 @@ db='''<h1>Disclaimer</h1>
 <p>This site does not publish a contact email or a correction form. To check a listing, open the source link on that row and confirm it with the facility. Each page shows the date it was last checked.</p>
 <p><a href="/">Stations by region</a> | <a href="/fees/">Fees and access</a> | <a href="/rules/">Dumping rules</a></p>'''
 page('disclaimer/index.html',"Full disclaimer for this Florida RV dump station guide",db,"Disclaimer for this independent Florida RV dump station guide: accuracy, no warranty, liability limits, external links, affiliation and official sources.",NEW,crumbs=[("Home",BASE+"/"),("Disclaimer",BASE+"/disclaimer/")])
+find_bits=['<h2>Home</h2><ul class="topic-list"><li data-keywords="'+H.escape(KW.get("index.html",""))+'">'+jump("index.html")+'</li></ul>']
+for g,items in GROUPS:
+    lis=''.join(f'<li data-keywords="{H.escape(KW.get(p,""))}">{jump(p)}</li>' for p,_t in items)
+    find_bits.append(f'<h2>{H.escape(g)}</h2><ul class="topic-list">{lis}</ul>')
+find_body='<h1>All pages</h1><p>Every page on this guide, grouped by topic. Use the search box to narrow this list. Clear the search to show every page.</p><p id="index-status" class="index-status" role="status">Showing every page.</p>'+''.join(find_bits)
+page('find/index.html',"Find every page in this Florida RV dump station guide",find_body,"Search and browse every page in this independent Florida RV dump station guide, grouped by topic, including regions, fees, rules and the disclaimer.",crumbs=[("Home",BASE+"/"),("All pages",BASE+"/find/")])
 nb='''<h1>Page not found</h1>
 <p>That address is not a page on this guide.</p>
 <ul class="grid">
@@ -427,6 +742,7 @@ nb='''<h1>Page not found</h1>
 <li><a href="/regions/southeast-keys/">Southeast and Keys</a></li>
 <li><a href="/fees/">Fees and access</a></li>
 <li><a href="/rules/">Dumping rules</a></li>
+<li><a href="/find/">All pages</a></li>
 <li><a href="/disclaimer/">Disclaimer</a></li>
 </ul>'''
 page('404.html',"Page not found on this Florida RV dump station guide",nb,"That page is not on this Florida RV dump station guide. Open the home page, a region, fees and access, dumping rules or the disclaimer.",NEW,crumbs=[("Home",BASE+"/"),("Page not found",BASE+"/404/")],article=False,robots="noindex")
