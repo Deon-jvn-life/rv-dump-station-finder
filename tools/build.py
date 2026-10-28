@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Build the Florida RV dump stations static site from JSON in tools/ into site/."""
-import json,os,re,html as H,shutil,sys,struct,zlib
+import json,os,re,html as H,shutil,sys,struct,zlib,urllib.parse
 HERE=os.path.dirname(os.path.abspath(__file__)); ROOT=os.path.dirname(HERE); OUT=os.path.join(ROOT,'site')
 D="26 October 2026"; SP="27 October 2026"; BASE="https://rv-dump-station-finder.vercel.app"  # replace with real domain before deploy
 # Optional search-console tokens. A blank value omits that meta tag.
@@ -63,8 +63,20 @@ def region(county): return C2R[county.replace(' County','').strip()]
 off=json.load(open(os.path.join(HERE,'official.json')))
 checked=json.load(open(os.path.join(HERE,'checked_no_dump.json')))
 osm=json.load(open(os.path.join(HERE,'osm_enriched.json')))
+GEO=json.load(open(os.path.join(HERE,'coordinates.json')))
+PLACES=GEO['places']
+STATE_PARKS=GEO['state_parks']
 recs=[]
-for o in off: o['region']=region(o['county']); recs.append(o)
+for o in off:
+    g=PLACES[o['id']]
+    o['directions_address']=g.get('directions_address')
+    o['directions_source']=g.get('directions_source')
+    o['coord_method']=g.get('method')
+    if g.get('confident'):
+        assert o.get('lat') is not None and abs(float(o['lat'])-float(g['lat']))<1e-6 and abs(float(o['lon'])-float(g['lon']))<1e-6, o['id']
+    else:
+        assert o.get('lat') is None and o.get('lon') is None, o['id']
+    o['region']=region(o['county']); recs.append(o)
 linked={4036349956}
 for e in osm:
     if e['id'] in linked: continue
@@ -77,12 +89,21 @@ for e in osm:
     extra=[]
     if t.get('operator'): extra.append('Operator tag: '+t['operator'])
     if t.get('sanitary_dump_station:round_drain')=='yes': extra.append('Round drain (OSM tag)')
+    dparts=[]
+    if road:
+        dparts.append(road)
+        if place: dparts.append(place)
+        if r.get('county'): dparts.append(r['county'])
+        dparts.append('Florida')
+        if r.get('postcode'): dparts.append(str(r['postcode']))
     recs.append(dict(id=f"osm-{e['id']}",name=nm,operator=t.get('operator','Not stated by source'),address=(road or 'Not stated by source'),city=place or 'Not stated by source',county=county,
       lat=e['lat'],lon=e['lon'],fee=fee,access=acc,water=wat,hours=t.get('opening_hours','Not stated by source'),notes='; '.join(extra),quote='',
-      source=f"https://www.openstreetmap.org/node/{e['id']}",level="Community (OpenStreetMap)",region=region(county)))
+      source=f"https://www.openstreetmap.org/node/{e['id']}",level="Community (OpenStreetMap)",region=region(county),
+      directions_address=(', '.join(dparts) if dparts else None),directions_source=f"https://www.openstreetmap.org/node/{e['id']}",coord_method='osm-node'))
 json.dump(recs,open(os.path.join(HERE,'stations_merged.json'),'w'),indent=1)
 CSS=open(os.path.join(HERE,'style.css')).read()
 NAV=open(os.path.join(HERE,'nav.js')).read()
+MAPJS=open(os.path.join(HERE,'map.js')).read()
 MONTHS={"January":"01","February":"02","March":"03","April":"04","May":"05","June":"06","July":"07","August":"08","September":"09","October":"10","November":"11","December":"12"}
 WARNS=0
 SM={}
@@ -203,6 +224,9 @@ def render_icon():
     return w,h,buf
 def assets():
     os.makedirs(OUT,exist_ok=True)
+    vend=os.path.join(OUT,'vendor','leaflet')
+    if os.path.isdir(vend): shutil.rmtree(vend)
+    shutil.copytree(os.path.join(HERE,'vendor','leaflet'), vend)
     open(os.path.join(OUT,'favicon.svg'),'w').write(FAVICON)
     w,h,buf=render_icon(); write_png(os.path.join(OUT,'apple-touch-icon.png'),w,h,buf)
     w,h,buf=render_og(); write_png(os.path.join(OUT,'og.png'),w,h,buf)
@@ -258,6 +282,18 @@ def verify_site():
         assert 'scroll-margin-top:var(--scroll-pad)' in text, rel
         assert 'id="read-next"' in text, rel
         assert 'id="q"' in text, rel
+        if 'id="loc-map"' in text:
+            assert 'scrollWheelZoom:false' in text, rel
+            assert 'https://www.openstreetmap.org/copyright' in text, rel
+            assert 'Get directions' in text, rel
+            assert 'target="_blank" rel="noopener"' in text, rel
+            assert 'role="region"' in text and 'aria-label="' in text, rel
+            assert 'id="map-data"' in text, rel
+            assert '/vendor/leaflet/leaflet.js' in text and 'sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH' in text, rel
+            assert 'maps.googleapis' not in text and 'maps/embed' not in text and 'unpkg.com/leaflet' not in text, rel
+            assert '.loc-map{position:relative;z-index:0' in text, rel
+        else:
+            assert 'leaflet' not in text.lower(), rel
         for href in re.findall(r'href="([^"]*)"', text):
             if href.startswith('http://') or href.startswith('https://') or href.startswith('mailto:') or href.startswith('#'): continue
             assert href.startswith('/') and 'index.html' not in href and not href.endswith('.html'), (rel, href)
@@ -558,11 +594,66 @@ def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,rob
     main=(f'<main id="content" tabindex="-1"><div class="shell">{visible_crumbs(path)}'
           f'<p class="meta"><span class="checked">Last checked: {e(when)}</span></p>'
           f'<p class="disclaimer">{e(DISCLAIMER)}</p>{article_html}</div></main>')
-    scripts=f'<script type="application/json" id="search-data">{search_json()}</script><script>{NAV}</script>'
+    extra_script=('<script>'+MAPJS+'</script>') if 'id="loc-map"' in body else ''
+    scripts=f'<script type="application/json" id="search-data">{search_json()}</script><script>{NAV}</script>'+extra_script
     h=''.join(head)+'<body><a class="skip" href="#content">Skip to content</a>'+header+main+foot+scripts+'</body></html>'
     assert '\u2014' not in h and '\u2013' not in h, path
     p=os.path.join(OUT,path); os.makedirs(os.path.dirname(p) or OUT, exist_ok=True); open(p,'w').write(h)
 CALL='<div class="card note"><strong>Call ahead.</strong> Hours, fees, gate codes and who may use a station change often, and many park stations are for registered campers only. Confirm with the operator before you drive there.</div>'
+def directions_href(address):
+    return 'https://www.google.com/maps/dir/?api=1&destination='+urllib.parse.quote(address, safe='')
+def directions_link(address, name):
+    if not address: return ''
+    href=H.escape(directions_href(address))
+    return f'<a class="dirs" href="{href}" target="_blank" rel="noopener">Get directions<span class="sr"> to {H.escape(name)} (opens in a new tab)</span></a>'
+def address_line(row):
+    addr=row.get('directions_address'); src=row.get('directions_source')
+    if not addr or not src: return ''
+    street=addr.split(',')[0]
+    if street and street in (row.get('address') or ''): return ''
+    return f'<br><span class="src">{H.escape(addr)} [<a href="{H.escape(src)}" rel="noopener">source</a>]</span>'
+def where_text(row):
+    bits=[]
+    city=row.get('city') or ''
+    if city and not city.startswith('Not stated'): bits.append(city)
+    county=row.get('county') or ''
+    if county and not county.startswith('Not stated'): bits.append(county+' County')
+    return ', '.join(bits)
+def map_points(rows, href_for):
+    pts=[]
+    for x in rows:
+        if x.get('lat') is None or x.get('lon') is None: continue
+        pts.append({"id":x["id"],"name":x["name"],"lat":float(x["lat"]),"lon":float(x["lon"]),
+            "where":where_text(x),"directions":(directions_href(x["directions_address"]) if x.get("directions_address") else None),
+            "href":href_for(x)})
+    return pts
+def map_html(points, heading, label, note):
+    if not points: return f'<h2>{H.escape(heading)}</h2><p class="map-note">{H.escape(note)}</p>'
+    payload=json.dumps(points, ensure_ascii=False).replace('<','\\u003c')
+    return (f'<h2>{H.escape(heading)}</h2><p class="map-note">{H.escape(note)}</p>'
+        f'<div id="loc-map" class="loc-map" role="region" aria-label="{H.escape(label)}" data-label="{H.escape(label)}">'
+        f'<p class="map-fallback">The list on this page is the full set of locations. The map loads here when this part of the page is on screen.</p></div>'
+        f'<script type="application/json" id="map-data">{payload}</script>')
+MAP_REPORT=[]
+def station_map(rows, place_name):
+    pts=map_points(rows, lambda x:'#loc-'+str(x['id']))
+    missing=len(rows)-len(pts)
+    note=(f"The table is the full list of {len(rows)} stations. The map is an extra view. "
+          f"It shows {len(pts)} stations. A community station is pinned at its OpenStreetMap point. "
+          f"An official station is pinned at coordinates the operator publishes, or at a confident match of the operator street address in OpenStreetMap Nominatim. "
+          f"A street-address pin is the matched address, not a surveyed dump inlet.")
+    if missing:
+        note+=f" {missing} {'station is' if missing==1 else 'stations are'} not on the map because a pin could not be placed with confidence."
+    label=f"Map of {len(pts)} RV dump stations in {place_name}. The table is the full list. Base map from OpenStreetMap."
+    MAP_REPORT.append((place_name,len(rows),len(pts)))
+    return map_html(pts,"Map of stations on this page",label,note)
+def park_dirs(key, repeat_address=True):
+    item=next(x for x in STATE_PARKS if x['id']==key)
+    g=PLACES[item['place']]
+    link=directions_link(g.get('directions_address'), item['name'])
+    if not link: return ''
+    if not repeat_address: return ' '+link
+    return ' '+link+f'<br><span class="src">{H.escape(g["directions_address"])} [<a href="{H.escape(g["directions_source"])}" rel="noopener">park page</a>]</span>'
 def table(rows):
     t=('<div class="filter"><label for="station-filter">Filter by name, city or county</label>'
        '<input id="station-filter" type="search" placeholder="Filter by name, city or county" autocomplete="off" '
@@ -574,7 +665,9 @@ def table(rows):
         q=f'<br><span class="src">Source says: "{H.escape(x["quote"])}"</span>' if x['quote'] else ''
         n=f'<br><span class="src">{H.escape(x["notes"])}</span>' if x['notes'] else ''
         lv='ok' if x['level'].startswith('Official') else 'comm'
-        t+=f'<tr><td><strong>{H.escape(x["name"])}</strong>{q}{n}</td><td>{H.escape(x["address"])}<br>{H.escape(x["city"])}, {H.escape(x["county"])} County</td><td>{co}</td><td>{H.escape(x["fee"])}</td><td>{H.escape(x["access"])}</td><td>{H.escape(x["water"])}</td><td>{H.escape(x["hours"])}</td><td><span class="lv {lv}">{x["level"]}</span> <span class="src">[{s}]</span></td></tr>'
+        dlink=directions_link(x.get('directions_address'), x['name'])
+        dhtml=(' '+dlink) if dlink else ''
+        t+=f'<tr id="loc-{H.escape(str(x["id"]))}"><td><strong>{H.escape(x["name"])}</strong>{dhtml}{address_line(x)}{q}{n}</td><td>{H.escape(x["address"])}<br>{H.escape(x["city"])}, {H.escape(x["county"])} County</td><td>{co}</td><td>{H.escape(x["fee"])}</td><td>{H.escape(x["access"])}</td><td>{H.escape(x["water"])}</td><td>{H.escape(x["hours"])}</td><td><span class="lv {lv}">{x["level"]}</span> <span class="src">[{s}]</span></td></tr>'
     return t+'</table></div>'
 LEVELS=f'''<div class="card"><strong>Verification levels</strong><ul><li><span class="lv ok">Official</span> the operator's own page (Florida State Parks, Love's) states a dump station, quoted in the table.</li>
 <li><span class="lv ok">Official + OSM</span> official page plus an OpenStreetMap point that names the same operator, used only for coordinates and extra tags.</li>
@@ -661,13 +754,25 @@ REGION_SEO={
 "southeast-keys":("RV dump stations in the Southeast and Keys, Florida","Sourced RV dump stations in the Southeast and the Keys, with fees, access, potable water, hours and links to operator pages or OpenStreetMap.")}
 for k,(n,cs) in REG.items():
     rows=[x for x in recs if x['region']==k]
-    b=f'<h1>RV dump stations: {n}</h1><p>{len(rows)} stations. Counties in this region: {", ".join(c.replace("_"," ") for c in cs.split())}.</p>{CALL}'+table(rows)+LEVELS+'<p><a href="/">All regions</a> | <a href="/fees/">Fees</a> | <a href="/state-parks/">State park dumps</a> | <a href="/rules/">Dumping rules</a></p>'
+    b=f'<h1>RV dump stations: {n}</h1><p>{len(rows)} stations. Counties in this region: {", ".join(c.replace("_"," ") for c in cs.split())}.</p>{CALL}'+table(rows)+station_map(rows,n)+LEVELS+'<p><a href="/">All regions</a> | <a href="/fees/">Fees</a> | <a href="/state-parks/">State park dumps</a> | <a href="/rules/">Dumping rules</a></p>'
     rt,rd=REGION_SEO[k]
     page(f'regions/{k}/index.html',rt,b,rd,crumbs=[("Home",BASE+"/"),(n,BASE+f"/regions/{k}/")])
 fr=[x for x in recs if x['fee']!='Not stated by source']
+fee_pts=map_points(fr, lambda x:'#loc-'+str(x['id']))
+fee_missing=len(fr)-len(fee_pts)
+fee_note=(f"The table above lists the {len(fr)} stations whose source states a fee. The map is an extra view of that list. "
+    f"It shows {len(fee_pts)} stations. A community station is pinned at its OpenStreetMap point. "
+    f"An official station is pinned at coordinates the operator publishes, or at a confident match of the operator street address in OpenStreetMap Nominatim. "
+    f"A street-address pin is the matched address, not a surveyed dump inlet.")
+if fee_missing:
+    fee_note+=f" {fee_missing} {'station is' if fee_missing==1 else 'stations are'} not on the map because a pin could not be placed with confidence."
+fee_label=f"Map of {len(fee_pts)} RV dump stations whose source states a fee. The table is the full list. Base map from OpenStreetMap."
+MAP_REPORT.append(("Fees",len(fr),len(fee_pts)))
+fee_map=map_html(fee_pts,"Map of stations on this page",fee_label,fee_note)
 fb=f'''<h1>Florida RV dump station fees and access</h1><p>Most sources do not publish a dump fee. Below are the only fee statements we found, then a summary of access rules.</p>{CALL}
-<h2>Fees that a source states</h2><div class="wrap"><table><tr><th scope="col">Station</th><th scope="col">County</th><th scope="col">Fee</th><th scope="col">Who can use it</th><th scope="col">Verification</th></tr>'''+''.join(f'<tr><td>{H.escape(x["name"])}</td><td>{x["county"]}</td><td>{H.escape(x["fee"])}</td><td>{H.escape(x["access"])}</td><td>{x["level"]} <span class="src">[<a href="{x["source"]}" rel="noopener">source</a>]</span></td></tr>' for x in fr)+f'''</table></div>
+<h2>Fees that a source states</h2><div class="wrap"><table><tr><th scope="col">Station</th><th scope="col">County</th><th scope="col">Fee</th><th scope="col">Who can use it</th><th scope="col">Verification</th></tr>'''+''.join(f'<tr id="loc-{H.escape(str(x["id"]))}"><td>{H.escape(x["name"])} {directions_link(x.get("directions_address"), x["name"])}</td><td>{x["county"]}</td><td>{H.escape(x["fee"])}</td><td>{H.escape(x["access"])}</td><td>{x["level"]} <span class="src">[<a href="{x["source"]}" rel="noopener">source</a>]</span></td></tr>' for x in fr)+f'''</table></div>
 <p>{len(recs)-len(fr)} of {len(recs)} stations: fee not stated by source.</p>
+{fee_map}
 <h2>Access summary</h2><div class="card"><ul>
 <li>Florida State Parks dump stations are described as campground amenities. Anastasia says free for park campers{src('anastasia')}. Where a park page states who may use the station, what a non-camper pays, or that a station is closed, the quotes are on the <a href="/state-parks/">state park dump</a> page (checked {SP}). Rainbow Springs says a day-use reservation program began on April 29, 2026, and that all visitors need a reservation to enter the park. That page does not say a day visitor may use the dump station{src('rainbow')}. State park camping reservations: 800-326-3521{src('fspres')}.</li>
 <li>Love's lists RV Dump Service among amenities at the four Florida locations we checked; price not stated on the location page{src('loves')}.</li>
@@ -675,8 +780,24 @@ fb=f'''<h1>Florida RV dump station fees and access</h1><p>Most sources do not pu
 <li>OpenStreetMap access tags: {sum(1 for x in recs if x['access'].startswith('Customers'))} customers only, {sum(1 for x in recs if x['access'].startswith('Public'))} public, rest not stated{src('osm')}.</li></ul></div>
 <p>For the statute and the Department of Health rule on where a tank may be emptied, see <a href="/rules/">where you can and cannot dump</a>. For who may use a state park station, see <a href="/state-parks/">state park dump stations</a>.</p>'''
 page('fees/index.html',"Florida RV dump station fees and access, with sources",fb,"Which Florida RV dump stations state a fee, who may use them, and how access is described on operator pages and OpenStreetMap tags.",crumbs=[("Home",BASE+"/"),("Fees",BASE+"/fees/")])
+sp_pts=[]
+for item in STATE_PARKS:
+    g=PLACES[item['place']]
+    if not item.get('map_pin'): continue
+    assert g.get('method')=='nominatim' and g.get('confident') and g.get('lat') is not None, item['id']
+    sp_pts.append({"id":item['id'],"name":item['name'],"lat":float(g['lat']),"lon":float(g['lon']),
+        "where":g['directions_address'],"directions":directions_href(g['directions_address']),"href":"#loc-park-"+item['id']})
+sp_missing=len(STATE_PARKS)-len(sp_pts)
+sp_note=(f"The text on this page names {len(STATE_PARKS)} parks. The map is an extra view. "
+    f"It shows {len(sp_pts)} parks whose street address matched one place in OpenStreetMap Nominatim. "
+    f"A pin is that matched address, not a surveyed dump inlet. "
+    f"{sp_missing} parks stay in the text and are not pinned, because the address match was not confident. "
+    f"Map tiles are from OpenStreetMap. The quoted rules on this page do not come from OpenStreetMap.")
+sp_label=f"Map of {len(sp_pts)} Florida State Parks named on this page. The text is the full information. Base map from OpenStreetMap."
+MAP_REPORT.append(("State park dumps",len(STATE_PARKS),len(sp_pts)))
+state_park_map=map_html(sp_pts,"Map of parks on this page",sp_label,sp_note)
 sp=f'''<h1>Who may use a Florida State Park dump station</h1>
-<p>This page quotes Florida State Parks pages that say who may use a dump station, what a person who is not a registered camper pays, or that a station is closed. It is not a list of every state park dump station. A page that only says a station exists is not given a row. This page does not use OpenStreetMap or any other community listing.</p>
+<p>This page quotes Florida State Parks pages that say who may use a dump station, what a person who is not a registered camper pays, or that a station is closed. It is not a list of every state park dump station. A page that only says a station exists is not given a row. The quoted rules on this page do not use OpenStreetMap or any other community listing.</p>
 {CALL}
 <h2>What the fee schedule says</h2>
 <div class="card">
@@ -694,62 +815,62 @@ sp=f'''<h1>Who may use a Florida State Park dump station</h1>
 <p>A row is included only when that park's own page states who may use the station or what a person who is not a registered camper pays. "Not stated" means that page does not say it. None of these hours pages states a separate opening time for the dump station. The hours below are the park hours on the hours page.</p>
 <div class="wrap"><table>
 <tr><th scope="col">Park</th><th scope="col">What the park page says</th><th scope="col">Fee on the park page</th><th scope="col">Park hours on the hours page</th></tr>
-<tr>
-<td><a href="{S['anastasia']}" rel="noopener">Anastasia State Park</a></td>
+<tr id="loc-park-anastasia">
+<td><a href="{S['anastasia']}" rel="noopener">Anastasia State Park</a>{park_dirs('anastasia')}</td>
 <td>"A communal dump station is free for park campers." The page does not say whether a person who is not a park camper may use it.</td>
 <td>Not stated on the park page.</td>
 <td>Open from 8 a.m. until sundown, 365 days a year. The hours page does not mention the dump station. Campers arriving after sunset are told to call 904-461-2033 on the day of arrival. That instruction is for campers.</td>
 </tr>
-<tr>
-<td><a href="{S['bluespring']}" rel="noopener">Blue Spring State Park</a></td>
+<tr id="loc-park-blue-spring">
+<td><a href="{S['bluespring']}" rel="noopener">Blue Spring State Park</a>{park_dirs('blue-spring')}</td>
 <td>"The dump station is located in the campground." The same page also says "A dump station is available in the park." It says: "The fee is $10.65 to use the dump station if you are not a registered camper." It also says: "A new day-use reservation program will be implemented at Blue Spring State Park beginning July 15, 2026. The window for advanced reservations opens July 8, 2026. All day-use visitors will be required to have a reservation to enter the park." It does not say that reservation is permission to use the dump station.</td>
 <td>$10.65 if you are not a registered camper. The fee schedule says $10.00. See the section above. The hours page does not repeat the $10.65. It says the RV utility fee includes water and electricity, and it does not mention the dump station.</td>
 <td>Open from 8 a.m. until sundown, 365 days a year.</td>
 </tr>
-<tr>
-<td><a href="{S['collier']}" rel="noopener">Collier-Seminole State Park</a></td>
+<tr id="loc-park-collier">
+<td><a href="{S['collier']}" rel="noopener">Collier-Seminole State Park</a>{park_dirs('collier')}</td>
 <td>"A centralized dump station is available for RV campers." The page does not say whether a person who is not an RV camper may use it. The park home page uses the words "A dump station is available for RV campers."</td>
 <td>Not stated. The hours page does not mention the dump station. It says the nightly utility fee includes water, electricity and sewer. That line does not say "dump station."</td>
 <td>8 a.m. until sunset, 365 days a year. The park page gives the address as 20200 Tamiami Trail E. Naples FL 34114, and the amenities page gives the ranger station phone as (239) 393-7306.</td>
 </tr>
-<tr>
-<td><a href="{S['caverns']}" rel="noopener">Florida Caverns State Park</a></td>
+<tr id="loc-park-caverns">
+<td><a href="{S['caverns']}" rel="noopener">Florida Caverns State Park</a>{park_dirs('caverns')}</td>
 <td>The equestrian section says three RV or trailer sites do not have sewer hookups, then: "Use of a communal dump station located at the entrance to the youth camp is free for park campers." The page does not say whether a day visitor may use it.</td>
 <td>Not stated for a person who is not a park camper. The hours page says the nightly utility fee includes water, electricity and sewer. It does not mention the dump station.</td>
 <td>The day-use portion is open daily, 8 a.m. until sunset CST.</td>
 </tr>
-<tr>
-<td><a href="{S['fortclinch']}" rel="noopener">Fort Clinch State Park</a></td>
+<tr id="loc-park-fort-clinch">
+<td><a href="{S['fortclinch']}" rel="noopener">Fort Clinch State Park</a>{park_dirs('fort-clinch')}</td>
 <td>"Both campgrounds have a dump station." "The dump station facilities are free of charge to registered campers, and they are also available for day visitors for a fee."</td>
 <td>The park page does not state the dollar amount. The hours page does not mention the dump station.</td>
 <td>Open 8 a.m. to sunset daily.</td>
 </tr>
-<tr>
-<td><a href="{S['gamble']}" rel="noopener">Gamble Rogers Memorial State Recreation Area, Flagler Beach</a></td>
+<tr id="loc-park-gamble">
+<td><a href="{S['gamble']}" rel="noopener">Gamble Rogers Memorial State Recreation Area, Flagler Beach</a>{park_dirs('gamble')}</td>
 <td>"A communal dump station is free to park campers." The page does not say whether a person who is not a park camper may use it.</td>
 <td>Not stated for a person who is not a park camper. The hours page does not mention the dump station. It says the nightly utility fee includes water, electricity and sewer. That line does not say "dump station."</td>
 <td>Open 8 a.m. until sundown, 365 days a year.</td>
 </tr>
-<tr>
-<td><a href="{S['kissimmee']}" rel="noopener">Kissimmee Prairie Preserve State Park</a></td>
+<tr id="loc-park-kissimmee">
+<td><a href="{S['kissimmee']}" rel="noopener">Kissimmee Prairie Preserve State Park</a>{park_dirs('kissimmee')}</td>
 <td>The hours page ties dump use to the RV utility fee. It does not say that a day visitor may use the station, and it does not say that a tent camper may use it.</td>
 <td>"$7 nightly utility fee for RV units. Utility fees include water, electricity and use of dump station. Utility fee does not apply to tent camping." A fee for a person who is not camping is not stated.</td>
 <td>Open 8 a.m. until sundown, 365 days a year.</td>
 </tr>
-<tr>
-<td><a href="{S['koreshan']}" rel="noopener">Koreshan State Park</a></td>
+<tr id="loc-park-koreshan">
+<td><a href="{S['koreshan']}" rel="noopener">Koreshan State Park</a>{park_dirs('koreshan')}</td>
 <td>"$10 dump station use plus entrance fee for those not registered as campers."</td>
 <td>$10, plus the entrance fee, for people who are not registered campers. Admission on the same page is $5 per vehicle (two to eight people), $4 for a single-occupant vehicle, and $2 for pedestrians, bicyclists, extra passengers, and passengers in a vehicle with the holder of an Annual Individual Entrance Pass. The fee schedule does not mention an entrance fee in the dump line.</td>
 <td>Open 8 a.m. until sunset, 365 days a year. The camping office is open daily 9 a.m. until 5 p.m. The page does not say those office hours are the dump-station hours.</td>
 </tr>
-<tr>
-<td><a href="{S['littlet']}" rel="noopener">Little Talbot Island State Park</a></td>
+<tr id="loc-park-little-talbot">
+<td><a href="{S['littlet']}" rel="noopener">Little Talbot Island State Park</a>{park_dirs('little-talbot')}</td>
 <td>The camping section says: "A dump station is available at the campground exit for RV campers." The RV section on the same page says: "A dump station is available at the campground exit." It does not repeat "for RV campers." The page does not say whether a day visitor may use the station. The same page says the campground playground, the campground canoe and kayak launch, and the Campground Nature Trail are for registered campers only, with no day-visitor use. It does not put that sentence on the dump station.</td>
 <td>Not stated. The hours page does not mention the dump station. It says the nightly utility fee includes water, electricity and sewer. That line does not say "dump station."</td>
 <td>Open from 8 a.m. until sunset, 365 days a year.</td>
 </tr>
-<tr>
-<td><a href="{S['oscar']}" rel="noopener">Oscar Scherer State Park</a></td>
+<tr id="loc-park-oscar">
+<td><a href="{S['oscar']}" rel="noopener">Oscar Scherer State Park</a>{park_dirs('oscar')}</td>
 <td>"Dump station, non-registered campers $10. Does not include park entrance fee."</td>
 <td>$10 for non-registered campers. The same page says that amount does not include the park entrance fee. Admission on that page is $5 per vehicle (up to eight people), $4 for a single-occupant vehicle, and $2 for pedestrians, bicyclists, extra passengers, and passengers in a vehicle with the card holder of an Annual Individual Entrance Pass. Sunset entrance is $4 per vehicle, for entry one hour prior to sunset. The dump bullet does not say the sunset rate applies to dumping.</td>
 <td>Open 8 a.m. until sundown, 365 days a year.</td>
@@ -759,9 +880,10 @@ sp=f'''<h1>Who may use a Florida State Park dump station</h1>
 <p>The Collier-Seminole address is on the park page.{src('https://www.floridastateparks.org/parks-and-trails/collier-seminole-state-park')}</p>
 <h2>A station the park page says is closed</h2>
 <div class="card">
-<p>Manatee Springs State Park, 11650 N.W. 115 St. Chiefland FL 32626. Phone 352-493-6072. The park page lists the hours as 8 a.m. to sunset, 365 days a year.{src('manateehome')}</p>
+<p id="loc-park-manatee">Manatee Springs State Park, 11650 N.W. 115 St. Chiefland FL 32626. {park_dirs('manatee', False)} Phone 352-493-6072. The park page lists the hours as 8 a.m. to sunset, 365 days a year.{src('manateehome')}</p>
 <p>That page says the waterfront restroom and dump station are currently closed, effective Jan. 14, 2026. The amenities page still says a dump station is provided for the Magnolia 2 and Hickory loops, which have no sewer hookup, and it does not say who may use it. Read both pages before you drive there. The two statements are also in the section above.{src('manateehome','manatee')}</p>
 </div>
+{state_park_map}
 <h2>What these pages do not say</h2>
 <div class="card">
 <ul>
@@ -770,7 +892,7 @@ sp=f'''<h1>Who may use a Florida State Park dump station</h1>
 <li>The camping page says: "Full-facility campsites for tent campers and RVers include water, electricity, a grill and picnic table, along with centralized showers, restrooms and dump station." It does not name the parks. It does not state a fee, and it does not say a day visitor may use the station. It gives the reservation phone as 800-326-3521 or TDD 888-433-0287.{src('fspcamp')}</li>
 <li>The Florida State Parks FAQ says: "Most parks have a central dump station." It does not name the parks, and it does not say who may use one.{src('fspfaq')}</li>
 <li>A park page that only says a dump station exists, and does not say who may use it, is not in the table. Stations this guide already quoted from an operator page stay on the <a href="/">regional lists</a>.</li>
-<li>Nothing on this page comes from OpenStreetMap or another community listing.</li>
+<li>The quoted rules on this page do not come from OpenStreetMap or another community listing. The map uses OpenStreetMap tiles. Each pin is a street address from that park's own page, matched by OpenStreetMap Nominatim.</li>
 </ul>
 </div>
 <h2>Sources read on 27 October 2026</h2>
@@ -907,3 +1029,18 @@ listed=sorted(p for p in pages if p!='404.html')
 open(os.path.join(OUT,'sitemap.xml'),'w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+''.join(f'<url><loc>{BASE}/{p.replace("index.html","")}</loc><lastmod>{SM[p]}</lastmod></url>\n' for p in listed)+'</urlset>\n')
 verify_site()
 print(len(recs),'records;',noff,'official;',ncom,'community;',cnt,'meta length warnings:',WARNS)
+print('MAP REPORT')
+for name,total,pins in MAP_REPORT:
+    print(f'  {name}: {pins} pins / {total} locations')
+print('STATIONS WITHOUT A PIN')
+for x in recs:
+    if x.get('lat') is None:
+        print(' ', x['id'], x['name'])
+print('STATIONS WITHOUT DIRECTIONS')
+for x in recs:
+    if not x.get('directions_address'):
+        print(' ', x['id'], x['name'])
+print('STATE PARKS WITHOUT A PIN')
+for item in STATE_PARKS:
+    if not item.get('map_pin'):
+        print(' ', item['id'], item['name'], PLACES[item['place']].get('why'))

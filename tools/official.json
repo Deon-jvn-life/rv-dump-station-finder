@@ -6,16 +6,19 @@
   "address": "Not stated by source (park is in Ormond Beach area; see park page)",
   "city": "Ormond Beach",
   "county": "Volusia",
-  "lat": null,
-  "lon": null,
+  "lat": 29.3377384,
+  "lon": -81.0811798,
   "fee": "Not stated by source",
   "access": "Campers (dump station is in the park; open to non-campers not stated by source)",
   "water": "Campsites have water; potable water at dump station not stated by source",
   "hours": "Not stated by source",
-  "notes": "Max RV length 34 feet. 100 campsites with electric and water.",
+  "notes": "Max RV length 34 feet. 100 campsites with electric and water. Coordinates are an OpenStreetMap Nominatim match for the park page address 2099 N. Beach St., Ormond Beach, FL 32174, on the point named Tomoka State Park Campground. Checked 28 October 2026.",
   "quote": "A dump station is located within the park.",
   "source": "https://www.floridastateparks.org/parks-and-trails/tomoka-state-park/experiences-amenities",
-  "level": "Official"
+  "level": "Official",
+  "directions_address": "2099 N. Beach St., Ormond Beach, FL 32174",
+  "directions_source": "https://www.floridastateparks.org/parks-and-trails/tomoka-state-park",
+  "coord_method": "nominatim"
  },
  {
   "id": "fsp-anastasia",
@@ -24,16 +27,19 @@
   "address": "Not stated by source",
   "city": "St. Augustine",
   "county": "St. Johns",
-  "lat": null,
-  "lon": null,
+  "lat": 29.8792288,
+  "lon": -81.2835277,
   "fee": "Free for park campers",
   "access": "Park campers",
   "water": "Campsites have water; potable water at dump station not stated by source",
   "hours": "Not stated by source",
-  "notes": "Max RV length 38 feet. 139 sites.",
+  "notes": "Max RV length 38 feet. 139 sites. Coordinates are an OpenStreetMap Nominatim match for the park page address 300 Anastasia Park Road, St. Augustine, FL 32080. Checked 28 October 2026.",
   "quote": "A communal dump station is free for park campers.",
   "source": "https://www.floridastateparks.org/parks-and-trails/anastasia-state-park/experiences-amenities",
-  "level": "Official"
+  "level": "Official",
+  "directions_address": "300 Anastasia Park Road, St. Augustine, FL 32080",
+  "directions_source": "https://www.floridastateparks.org/parks-and-trails/anastasia-state-park",
+  "coord_method": "nominatim"
  },
  {
   "id": "fsp-myakka",
@@ -48,10 +54,13 @@
   "access": "Campers (non-camper use not stated by source)",
   "water": "Campsites have water; potable water at dump station not stated by source",
   "hours": "Not stated by source",
-  "notes": "Palmetto Ridge sites have sewer hook-ups.",
+  "notes": "Palmetto Ridge sites have sewer hook-ups. No map pin. The park page gives 13207 State Road 72, Sarasota, FL 34241. On 28 October 2026 Nominatim returned two different points with house number 13207 on that road, about 4 km apart, so the match is not confident. Directions use that street address.",
   "quote": "A dump station is located near Old Prairie Campground.",
   "source": "https://www.floridastateparks.org/parks-and-trails/myakka-river-state-park/experiences-amenities",
-  "level": "Official"
+  "level": "Official",
+  "directions_address": "13207 State Road 72, Sarasota, FL 34241",
+  "directions_source": "https://www.floridastateparks.org/parks-and-trails/myakka-river-state-park",
+  "coord_method": "none"
  },
  {
   "id": "fsp-curry",
@@ -60,16 +69,19 @@
   "address": "Not stated by source (Middle Keys, on U.S. 1)",
   "city": "Marathon area",
   "county": "Monroe",
-  "lat": null,
-  "lon": null,
+  "lat": 24.7428284,
+  "lon": -80.9827338,
   "fee": "Not stated by source",
   "access": "Campground amenity (non-camper use not stated by source)",
   "water": "Campsites have water; potable water at dump station not stated by source",
   "hours": "Not stated by source",
-  "notes": "28 sites, max RV length 70 feet.",
+  "notes": "28 sites, max RV length 70 feet. Coordinates are an OpenStreetMap Nominatim match for the park page address 56200 Overseas Highway, Marathon, FL 33050, on the point named Curry Hammock State Park Entrance Station. Checked 28 October 2026.",
   "quote": "Campground amenities include a dump station",
   "source": "https://www.floridastateparks.org/parks-and-trails/curry-hammock-state-park/experiences-amenities",
-  "level": "Official"
+  "level": "Official",
+  "directions_address": "56200 Overseas Highway, Marathon, FL 33050",
+  "directions_source": "https://www.floridastateparks.org/parks-and-trails/curry-hammock-state-park",
+  "coord_method": "nominatim"
  },
  {
   "id": "fsp-rainbow",
@@ -84,10 +96,13 @@
   "access": "Campers. Campground gates are closed at all times; gate code given on day of arrival",
   "water": "Sites have water and sewer; potable water at dump station not stated by source",
   "hours": "Campground office 11 a.m. to 5:30 p.m. daily",
-  "notes": "Maximum recreational vehicle length 103 feet. Campground phone 352-465-8550. The same page says a day-use reservation program began on April 29, 2026, and that all visitors need a reservation to enter the park. It describes the campground as a separate facility a few miles from the headspring.",
+  "notes": "Maximum recreational vehicle length 103 feet. Campground phone 352-465-8550. The same page says a day-use reservation program began on April 29, 2026, and that all visitors need a reservation to enter the park. It describes the campground as a separate facility a few miles from the headspring. No map pin. Directions use the campground entrance on the park entrances page, 18185 S.W. 94th St., Dunnellon FL 34432. Nominatim returned no match for that address on 28 October 2026. The amenities page also prints 1815 S.W. 94th St. in one section. The entrances page gives 18185 for the campground.",
   "quote": "A dump station is located near the RV staging area.",
   "source": "https://www.floridastateparks.org/parks-and-trails/rainbow-springs-state-park/experiences-amenities",
-  "level": "Official"
+  "level": "Official",
+  "directions_address": "18185 S.W. 94th St., Dunnellon, FL 34432",
+  "directions_source": "https://www.floridastateparks.org/parks-and-trails/rainbow-springs-state-park/entrances-park",
+  "coord_method": "none"
  },
  {
   "id": "fsp-jd",
@@ -96,16 +111,19 @@
   "address": "Not stated by source",
   "city": "Hobe Sound area",
   "county": "Martin",
-  "lat": null,
-  "lon": null,
+  "lat": 27.0043454,
+  "lon": -80.1638807,
   "fee": "Not stated by source",
   "access": "Campers (non-camper use not stated by source)",
   "water": "Sites have water; potable water at dump station not stated by source",
   "hours": "Not stated by source",
-  "notes": "About 4 miles from the River Campground. Max RV 40 feet (Pine Grove), 36 feet (River).",
+  "notes": "About 4 miles from the River Campground. Max RV 40 feet (Pine Grove), 36 feet (River). Coordinates are an OpenStreetMap Nominatim match for the park page address 16450 S.E. Federal Highway, Hobe Sound, FL 33455. The matched point is named Kitching Creek Primitive Camp and carries that house number. Checked 28 October 2026.",
   "quote": "A dump station is located at Pine Grove Campground, approximately 4 miles from the River Campground.",
   "source": "https://www.floridastateparks.org/parks-and-trails/jonathan-dickinson-state-park/experiences-amenities",
-  "level": "Official"
+  "level": "Official",
+  "directions_address": "16450 S.E. Federal Highway, Hobe Sound, FL 33455",
+  "directions_source": "https://www.floridastateparks.org/parks-and-trails/jonathan-dickinson-state-park",
+  "coord_method": "nominatim"
  },
  {
   "id": "fsp-manatee",
@@ -120,11 +138,14 @@
   "access": "Campers per OSM tag access=customers; official page does not say",
   "water": "OSM tag water_point=yes (community data)",
   "hours": "Not stated by source",
-  "notes": "No sewer hook-ups in Magnolia 2 or Hickory loops. Coordinates from OSM node 4036349956 (operator tag 'Manatee Springs SP'). On 27 October 2026 the park home page said the waterfront restroom and dump station are currently closed, effective Jan. 14, 2026. The amenities page still says a dump station is provided. See the state park dumps page.",
+  "notes": "No sewer hook-ups in Magnolia 2 or Hickory loops. Coordinates from OSM node 4036349956 (operator tag 'Manatee Springs SP'). On 27 October 2026 the park home page said the waterfront restroom and dump station are currently closed, effective Jan. 14, 2026. The amenities page still says a dump station is provided. See the state park dumps page. Directions use the park page address 11650 N.W. 115 St., Chiefland FL 32626. Nominatim returned no match for that street address on 28 October 2026. The pin stays on the OpenStreetMap node cited above.",
   "quote": "There is no sewer hook-up in Magnolia 2 or Hickory but a dump station is provided.",
   "source": "https://www.floridastateparks.org/parks-and-trails/manatee-springs-state-park/experiences-amenities",
   "source2": "https://www.openstreetmap.org/node/4036349956",
-  "level": "Official + OSM"
+  "level": "Official + OSM",
+  "directions_address": "11650 N.W. 115 St., Chiefland, FL 32626",
+  "directions_source": "https://www.floridastateparks.org/parks-and-trails/manatee-springs-state-park",
+  "coord_method": "osm-node"
  },
  {
   "id": "loves-708",
@@ -139,10 +160,13 @@
   "access": "Customers (page lists RV Dump Service among amenities for customers)",
   "water": "Not stated by source",
   "hours": "Store open 24 hours per location page; dump station hours not stated by source",
-  "notes": "",
+  "notes": "Coordinates and the postal address are published on the Love's location page.",
   "quote": "RV Dump Service",
   "source": "https://www.loves.com/locations/fl/bushnell/loves-travel-stop-bushnell-708",
-  "level": "Official"
+  "level": "Official",
+  "directions_address": "2615 W C-48, Bushnell, FL 33513",
+  "directions_source": "https://www.loves.com/locations/fl/bushnell/loves-travel-stop-bushnell-708",
+  "coord_method": "operator-page"
  },
  {
   "id": "loves-620",
@@ -157,10 +181,13 @@
   "access": "Customers",
   "water": "Not stated by source",
   "hours": "Dump station hours not stated by source",
-  "notes": "",
+  "notes": "Coordinates and the postal address are published on the Love's location page.",
   "quote": "RV Dump Service",
   "source": "https://www.loves.com/locations/fl/hawthorne/loves-travel-stop-hawthorne-620",
-  "level": "Official"
+  "level": "Official",
+  "directions_address": "5615 SE US Highway 301, Hawthorne, FL 32640",
+  "directions_source": "https://www.loves.com/locations/fl/hawthorne/loves-travel-stop-hawthorne-620",
+  "coord_method": "operator-page"
  },
  {
   "id": "loves-561",
@@ -175,10 +202,13 @@
   "access": "Customers",
   "water": "Not stated by source",
   "hours": "Dump station hours not stated by source",
-  "notes": "",
+  "notes": "Coordinates and the postal address are published on the Love's location page.",
   "quote": "RV Dump Service",
   "source": "https://www.loves.com/locations/fl/mossy-head/loves-travel-stop-mossy-head-561",
-  "level": "Official"
+  "level": "Official",
+  "directions_address": "17750 Hwy 285 Drive S, Mossy Head, FL 32435",
+  "directions_source": "https://www.loves.com/locations/fl/mossy-head/loves-travel-stop-mossy-head-561",
+  "coord_method": "operator-page"
  },
  {
   "id": "loves-724",
@@ -193,9 +223,12 @@
   "access": "Customers",
   "water": "Not stated by source",
   "hours": "Store open 24 hours per location page; dump station hours not stated by source",
-  "notes": "Page also lists RV Hookup.",
+  "notes": "Page also lists RV Hookup. Coordinates and the postal address are published on the Love's location page.",
   "quote": "RV Dump Service",
   "source": "https://www.loves.com/locations/fl/lake-city/loves-travel-stop-lake-city-724",
-  "level": "Official"
+  "level": "Official",
+  "directions_address": "13700 S US Highway 441, Lake City, FL 32025",
+  "directions_source": "https://www.loves.com/locations/fl/lake-city/loves-travel-stop-lake-city-724",
+  "coord_method": "operator-page"
  }
 ]

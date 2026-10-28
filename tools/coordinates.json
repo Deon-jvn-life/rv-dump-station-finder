@@ -1,0 +1,297 @@
+{
+ "checked": "28 October 2026",
+ "user_agent": "FloridaRVDumpStationFinder/1.0 (https://rv-dump-station-finder.vercel.app; geocoding official street addresses for map pins)",
+ "rate": "1 request per second",
+ "places": {
+  "fsp-tomoka": {
+   "directions_address": "2099 N. Beach St., Ormond Beach, FL 32174",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/tomoka-state-park",
+   "method": "nominatim",
+   "confident": true,
+   "lat": 29.3377384,
+   "lon": -81.0811798,
+   "query": "2099 N. Beach St., Ormond Beach, FL 32174",
+   "why": "Three Nominatim hits share house number 2099 on North Beach Street in Ormond Beach. The pin uses the hit named Tomoka State Park Campground. The house point and the ranger station are the same address, within about 0.7 km.",
+   "nominatim_display_name": "Tomoka State Park Campground, 2099, North Beach Street, Ormond Beach, Volusia County, Florida, 32174, United States",
+   "nominatim_type": "caravan_site",
+   "nominatim_place_id": 301529976
+  },
+  "fsp-anastasia": {
+   "directions_address": "300 Anastasia Park Road, St. Augustine, FL 32080",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/anastasia-state-park",
+   "method": "nominatim",
+   "confident": true,
+   "lat": 29.8792288,
+   "lon": -81.2835277,
+   "query": "300 Anastasia Park Road, St. Augustine, FL 32080",
+   "why": "One Nominatim hit. House number 300 on Anastasia Park Road in Saint Augustine, Saint Johns County, Florida, ZIP 32080.",
+   "nominatim_display_name": "300, Anastasia Park Road, Anastasia, Saint Augustine, Saint Johns County, Florida, 32080, United States",
+   "nominatim_type": "house",
+   "nominatim_place_id": 388919511
+  },
+  "fsp-myakka": {
+   "directions_address": "13207 State Road 72, Sarasota, FL 34241",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/myakka-river-state-park",
+   "method": "none",
+   "confident": false,
+   "lat": null,
+   "lon": null,
+   "query": "13207, State Road 72, Sarasota, Florida",
+   "why": "Nominatim returned two house-number matches for 13207 on State Road 72, about 4 km apart (27.2446091, -82.3490284 and 27.2529110, -82.3926904). No pin."
+  },
+  "fsp-curry": {
+   "directions_address": "56200 Overseas Highway, Marathon, FL 33050",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/curry-hammock-state-park",
+   "method": "nominatim",
+   "confident": true,
+   "lat": 24.7428284,
+   "lon": -80.9827338,
+   "query": "56200 Overseas Highway, Marathon, FL 33050",
+   "why": "House number 56200 on Overseas Highway in Marathon, Monroe County. The pin uses the hit named Curry Hammock State Park Entrance Station. A second hit at the same house number is about 80 m away. The entrance hit is tagged ZIP 33052. The park page says 33050.",
+   "nominatim_display_name": "Curry Hammock State Park Entrance Station, 56200, Overseas Highway, Valhalla, Marathon, Monroe County, Florida, 33052, United States",
+   "nominatim_type": "ranger_station",
+   "nominatim_place_id": 305449857
+  },
+  "fsp-rainbow": {
+   "directions_address": "18185 S.W. 94th St., Dunnellon, FL 34432",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/rainbow-springs-state-park/entrances-park",
+   "method": "none",
+   "confident": false,
+   "lat": null,
+   "lon": null,
+   "query": "18185 SW 94th Street, Dunnellon, Florida",
+   "why": "The entrances page gives 18185 S.W. 94th St. for the campground. The amenities page also prints 1815 S.W. 94th St. in one section. Nominatim returned no match for 18185. No pin. Directions use 18185 from the entrances page."
+  },
+  "fsp-jd": {
+   "directions_address": "16450 S.E. Federal Highway, Hobe Sound, FL 33455",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/jonathan-dickinson-state-park",
+   "method": "nominatim",
+   "confident": true,
+   "lat": 27.0043454,
+   "lon": -80.1638807,
+   "query": "16450 SE Federal Highway, Hobe Sound, Florida",
+   "why": "One Nominatim hit with house number 16450 on Southeast Federal Highway, Hobe Sound, Martin County, ZIP 33455. The hit is named Kitching Creek Primitive Camp.",
+   "nominatim_display_name": "Kitching Creek Primitive Camp, 16450, Southeast Federal Highway, Hobe Sound, Martin County, Florida, 33455, United States",
+   "nominatim_type": "camp_site"
+  },
+  "fsp-manatee": {
+   "directions_address": "11650 N.W. 115 St., Chiefland, FL 32626",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/manatee-springs-state-park",
+   "method": "osm-node",
+   "confident": true,
+   "lat": 29.4886872,
+   "lon": -82.9736262,
+   "query": "11650 NW 115th Street, Chiefland, Florida 32626",
+   "why": "The station list already cites OpenStreetMap node 4036349956 for these coordinates. Nominatim returned no match for the park street address, so that address was not used as a pin. Directions use the park page address.",
+   "coord_source": "https://www.openstreetmap.org/node/4036349956"
+  },
+  "loves-708": {
+   "directions_address": "2615 W C-48, Bushnell, FL 33513",
+   "directions_source": "https://www.loves.com/locations/fl/bushnell/loves-travel-stop-bushnell-708",
+   "method": "operator-page",
+   "confident": true,
+   "lat": 28.66815,
+   "lon": -82.147216,
+   "why": "GeoCoordinates and postal address on the Love's location page."
+  },
+  "loves-620": {
+   "directions_address": "5615 SE US Highway 301, Hawthorne, FL 32640",
+   "directions_source": "https://www.loves.com/locations/fl/hawthorne/loves-travel-stop-hawthorne-620",
+   "method": "operator-page",
+   "confident": true,
+   "lat": 29.601979,
+   "lon": -82.08676,
+   "why": "GeoCoordinates and postal address on the Love's location page."
+  },
+  "loves-561": {
+   "directions_address": "17750 Hwy 285 Drive S, Mossy Head, FL 32435",
+   "directions_source": "https://www.loves.com/locations/fl/mossy-head/loves-travel-stop-mossy-head-561",
+   "method": "operator-page",
+   "confident": true,
+   "lat": 30.733881,
+   "lon": -86.349145,
+   "why": "GeoCoordinates and postal address on the Love's location page."
+  },
+  "loves-724": {
+   "directions_address": "13700 S US Highway 441, Lake City, FL 32025",
+   "directions_source": "https://www.loves.com/locations/fl/lake-city/loves-travel-stop-lake-city-724",
+   "method": "operator-page",
+   "confident": true,
+   "lat": 30.002627,
+   "lon": -82.598483,
+   "why": "GeoCoordinates and postal address on the Love's location page."
+  },
+  "blue-spring": {
+   "directions_address": "2100 W. French Ave., Orange City, FL 32763",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/blue-spring-state-park",
+   "method": "nominatim",
+   "confident": true,
+   "lat": 28.9521766,
+   "lon": -81.3338642,
+   "query": "2100 W. French Ave., Orange City, FL 32763",
+   "why": "One Nominatim hit. House number 2100 on West French Avenue in Orange City, Volusia County, ZIP 32763.",
+   "nominatim_display_name": "2100, West French Avenue, Blue Spring Landing, Orange City, Volusia County, Florida, 32763, United States",
+   "nominatim_type": "house",
+   "nominatim_place_id": 303133120
+  },
+  "collier-seminole": {
+   "directions_address": "20200 Tamiami Trail E., Naples, FL 34114",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/collier-seminole-state-park",
+   "method": "nominatim",
+   "confident": true,
+   "lat": 25.9916478,
+   "lon": -81.5916998,
+   "query": "20200 Tamiami Trail E., Naples, FL 34114",
+   "why": "One Nominatim hit named Collier-Seminole State Park Entrance Station. House number 20200 on Tamiami Trail East, Collier County, ZIP 34114. The locality on the hit is Royal Palm Hammock. The park page gives the mailing city as Naples.",
+   "nominatim_display_name": "Collier-Seminole State Park Entrance Station, 20200, Tamiami Trail East, Royal Palm Hammock, Collier County, Florida, 34114, United States",
+   "nominatim_type": "ranger_station",
+   "nominatim_place_id": 306802480
+  },
+  "florida-caverns": {
+   "directions_address": "3345 Caverns Road, Marianna, FL 32446",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/florida-caverns-state-park",
+   "method": "none",
+   "confident": false,
+   "lat": null,
+   "lon": null,
+   "query": "3345 Caverns Road, Marianna, FL 32446",
+   "why": "Nominatim returned Caverns Road with no house number. No pin."
+  },
+  "fort-clinch": {
+   "directions_address": "2601 Atlantic Ave., Fernandina Beach, FL 32034",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/fort-clinch-state-park",
+   "method": "nominatim",
+   "confident": true,
+   "lat": 30.6700586,
+   "lon": -81.4346524,
+   "query": "2601 Atlantic Ave., Fernandina Beach, FL 32034",
+   "why": "One Nominatim hit named Fort Clinch State Park. House number 2601 on Atlantic Avenue in Fernandina Beach, Nassau County, ZIP 32034.",
+   "nominatim_display_name": "Fort Clinch State Park, 2601, Atlantic Avenue, Fernandina Beach, Nassau County, Florida, 32034, United States",
+   "nominatim_type": "commercial",
+   "nominatim_place_id": 301170058
+  },
+  "gamble-rogers": {
+   "directions_address": "3100 S. Oceanshore Blvd., Flagler Beach, FL 32136",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/gamble-rogers-memorial-state-recreation-area-flagler-beach",
+   "method": "none",
+   "confident": false,
+   "lat": null,
+   "lon": null,
+   "query": "3100 South Oceanshore Boulevard, Flagler Beach, Florida 32136",
+   "why": "Nominatim returned South Oceanshore Boulevard with no house number, and two different road points. No pin."
+  },
+  "kissimmee-prairie": {
+   "directions_address": "33104 N.W. 192nd Ave., Okeechobee, FL 34972",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/kissimmee-prairie-preserve-state-park",
+   "method": "nominatim",
+   "confident": true,
+   "lat": 27.5404331,
+   "lon": -81.0228009,
+   "query": "33104 NW 192nd Avenue, Okeechobee, Florida 34972",
+   "why": "One Nominatim hit. House number 33104 on Northwest 192nd Avenue, Okeechobee County, ZIP 34972.",
+   "nominatim_display_name": "33104, Northwest 192nd Avenue, Okeechobee County, Florida, 34972, United States",
+   "nominatim_type": "house"
+  },
+  "koreshan": {
+   "directions_address": "3800 Corkscrew Road, Estero, FL 33928",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/koreshan-state-park",
+   "method": "nominatim",
+   "confident": true,
+   "lat": 26.4326657,
+   "lon": -81.81539,
+   "query": "3800 Corkscrew Road, Estero, FL 33928",
+   "why": "One Nominatim hit named Koreshan State Historic Park Entrance Station. House number 3800 on Corkscrew Road in Estero, Lee County, ZIP 33928.",
+   "nominatim_display_name": "Koreshan State Historic Park Entrance Station, 3800, Corkscrew Road, Estero, Lee County, Florida, 33928, United States",
+   "nominatim_type": "ranger_station",
+   "nominatim_place_id": 304959935
+  },
+  "little-talbot": {
+   "directions_address": "12157 Heckscher Drive, Jacksonville, FL 32226",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/little-talbot-island-state-park",
+   "method": "none",
+   "confident": false,
+   "lat": null,
+   "lon": null,
+   "query": "12157 Heckscher Drive, Jacksonville, Florida 32226",
+   "why": "Nominatim returned Heckscher Drive with no house number, at two points about 2 km apart. One hit used ZIP 32277, not the park page ZIP 32226. No pin."
+  },
+  "oscar-scherer": {
+   "directions_address": "1843 S. Tamiami Trail, Osprey, FL 34229",
+   "directions_source": "https://www.floridastateparks.org/parks-and-trails/oscar-scherer-state-park",
+   "method": "none",
+   "confident": false,
+   "lat": null,
+   "lon": null,
+   "query": "1843 S. Tamiami Trail, Osprey, FL 34229",
+   "why": "Nominatim returned South Tamiami Trail in Osprey with no house number. No pin."
+  }
+ },
+ "state_parks": [
+  {
+   "id": "anastasia",
+   "name": "Anastasia State Park",
+   "place": "fsp-anastasia",
+   "map_pin": true
+  },
+  {
+   "id": "blue-spring",
+   "name": "Blue Spring State Park",
+   "place": "blue-spring",
+   "map_pin": true
+  },
+  {
+   "id": "collier",
+   "name": "Collier-Seminole State Park",
+   "place": "collier-seminole",
+   "map_pin": true
+  },
+  {
+   "id": "caverns",
+   "name": "Florida Caverns State Park",
+   "place": "florida-caverns",
+   "map_pin": false
+  },
+  {
+   "id": "fort-clinch",
+   "name": "Fort Clinch State Park",
+   "place": "fort-clinch",
+   "map_pin": true
+  },
+  {
+   "id": "gamble",
+   "name": "Gamble Rogers Memorial State Recreation Area, Flagler Beach",
+   "place": "gamble-rogers",
+   "map_pin": false
+  },
+  {
+   "id": "kissimmee",
+   "name": "Kissimmee Prairie Preserve State Park",
+   "place": "kissimmee-prairie",
+   "map_pin": true
+  },
+  {
+   "id": "koreshan",
+   "name": "Koreshan State Park",
+   "place": "koreshan",
+   "map_pin": true
+  },
+  {
+   "id": "little-talbot",
+   "name": "Little Talbot Island State Park",
+   "place": "little-talbot",
+   "map_pin": false
+  },
+  {
+   "id": "oscar",
+   "name": "Oscar Scherer State Park",
+   "place": "oscar-scherer",
+   "map_pin": false
+  },
+  {
+   "id": "manatee",
+   "name": "Manatee Springs State Park",
+   "place": "fsp-manatee",
+   "map_pin": false
+  }
+ ]
+}

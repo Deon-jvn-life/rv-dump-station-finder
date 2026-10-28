@@ -156,13 +156,13 @@
    "amenity": "sanitary_dump_station"
   },
   "_rev": {
-   "display": "Gulf County, Florida, United States",
-   "name": "",
+   "display": "Cabin Road, Gulf County, Florida, United States",
+   "name": "Cabin Road",
    "cat": "highway",
    "type": "residential",
    "city": null,
    "county": "Gulf County",
-   "road": null,
+   "road": "Cabin Road",
    "house": null,
    "postcode": null
   }
@@ -417,13 +417,13 @@
    "sanitary_dump_station:round_drain": "yes"
   },
   "_rev": {
-   "display": "Monroe County, Florida, United States",
-   "name": "",
+   "display": "Sunset Boulevard, Monroe County, Florida, United States",
+   "name": "Sunset Boulevard",
    "cat": "highway",
    "type": "residential",
    "city": null,
    "county": "Monroe County",
-   "road": null,
+   "road": "Sunset Boulevard",
    "house": null,
    "postcode": null
   }
