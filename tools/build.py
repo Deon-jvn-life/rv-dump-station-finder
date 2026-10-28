@@ -2,7 +2,7 @@
 """Build the Florida RV dump stations static site from JSON in tools/ into site/."""
 import json,os,re,html as H,shutil,sys,struct,zlib
 HERE=os.path.dirname(os.path.abspath(__file__)); ROOT=os.path.dirname(HERE); OUT=os.path.join(ROOT,'site')
-D="26 October 2026"; BASE="https://rv-dump-station-finder.vercel.app"  # replace with real domain before deploy
+D="26 October 2026"; SP="27 October 2026"; BASE="https://rv-dump-station-finder.vercel.app"  # replace with real domain before deploy
 # Optional search-console tokens. A blank value omits that meta tag.
 VERIFY={"google-site-verification":"XA7XgB_UwrIRvQyNVsnWpSyTyaU6e3-v4g4RBw8RAVI","msvalidate.01":""}
 DISCLAIMER="For general information only. This independent site is not affiliated with any government or agency. Information can change and may contain errors; always confirm with the official source or facility before you act. Nothing here is legal or professional advice, and we accept no liability for decisions made using it."
@@ -26,7 +26,31 @@ S=dict(fsp="https://www.floridastateparks.org/stay-night",fdot="https://www.fdot
  c62600="https://flrules.org/gateway/ChapterHome.asp?Chapter=62-600",
  r1428="https://flrules.org/gateway/ruleNo.asp?id=14-28.002",
  r1428pdf="https://fdotwww.blob.core.windows.net/sitefinity/docs/default-source/maintenance/cont/ra/14-28-002.pdf",
- fdotgis="https://gis.fdot.gov/arcgis/rest/services/fdotRestFacilities/MapServer/1")
+ fdotgis="https://gis.fdot.gov/arcgis/rest/services/fdotRestFacilities/MapServer/1",
+ s258014="https://www.flsenate.gov/Laws/Statutes/2026/0258.014",
+ fspfee="https://www.floridastateparks.org/sites/default/files/media/file/2021_05_10%20FSP%20Fee%20Schedule.pdf",
+ fspfee2="https://www.floridastateparks.org/sites/default/files/inline-files/2021_05_10%20FSP%20Fee%20Schedule%2005.2022.pdf",
+ fspfee2013="https://www.floridastateparks.org/sites/default/files/inline-files/2013_10_01%20Fee%20Schedule%20-%20NEW%20FORMAT.pdf",
+ fspcamp="https://www.floridastateparks.org/camping",
+ fspfaq="https://www.floridastateparks.org/plan-your-visit/faqs",
+ koreshan="https://www.floridastateparks.org/parks-and-trails/koreshan-state-park/hours-fees",
+ oscar="https://www.floridastateparks.org/parks-and-trails/oscar-scherer-state-park/hours-fees",
+ bluespring="https://www.floridastateparks.org/parks-and-trails/blue-spring-state-park/experiences-amenities",
+ bluespringh="https://www.floridastateparks.org/parks-and-trails/blue-spring-state-park/hours-fees",
+ fortclinch="https://www.floridastateparks.org/parks-and-trails/fort-clinch-state-park/experiences-amenities-0",
+ fortclinchh="https://www.floridastateparks.org/parks-and-trails/fort-clinch-state-park/hours-fees",
+ anastasiah="https://www.floridastateparks.org/parks-and-trails/anastasia-state-park/hours-fees",
+ gamble="https://www.floridastateparks.org/parks-and-trails/gamble-rogers-memorial-state-recreation-area-flagler-beach/experiences-amenities",
+ gambleh="https://www.floridastateparks.org/parks-and-trails/gamble-rogers-memorial-state-recreation-area-flagler-beach/hours-fees",
+ caverns="https://www.floridastateparks.org/parks-and-trails/florida-caverns-state-park/experiences-amenities",
+ cavernsh="https://www.floridastateparks.org/parks-and-trails/florida-caverns-state-park/hours-fees",
+ littlet="https://www.floridastateparks.org/parks-and-trails/little-talbot-island-state-park/experiences-amenities",
+ littleth="https://www.floridastateparks.org/parks-and-trails/little-talbot-island-state-park/hours-fees",
+ kissimmee="https://www.floridastateparks.org/parks-and-trails/kissimmee-prairie-preserve-state-park/hours-fees",
+ collier="https://www.floridastateparks.org/parks-and-trails/collier-seminole-state-park/experiences-amenities",
+ collierh="https://www.floridastateparks.org/parks-and-trails/collier-seminole-state-park/hours-fees",
+ manatee="https://www.floridastateparks.org/parks-and-trails/manatee-springs-state-park/experiences-amenities",
+ manateehome="https://www.floridastateparks.org/parks-and-trails/manatee-springs-state-park")
 def src(*k): return ' <span class="src">['+', '.join(f'<a href="{S.get(x,x)}" rel="noopener">source</a>' for x in k)+']</span>'
 REG={"panhandle":("Panhandle","Escambia Santa_Rosa Okaloosa Walton Holmes Washington Bay Jackson Calhoun Gulf Franklin Liberty Gadsden Leon Wakulla Jefferson"),
 "north":("North Florida","Madison Taylor Hamilton Suwannee Lafayette Dixie Columbia Gilchrist Levy Alachua Union Bradford Baker Nassau Duval Clay St._Johns Putnam Flagler Marion"),
@@ -244,7 +268,12 @@ def verify_site():
     sm=open(os.path.join(OUT,'sitemap.xml')).read()
     assert sm.count('<url>')==len(htmls)-1
     assert BASE+'/disclaimer/</loc>' in sm and '404' not in sm
-    assert sm.count('<lastmod>'+iso_date(D)+'</lastmod>')==len(htmls)-1
+    assert sm.count('<lastmod>')==len(htmls)-1
+    for rel in htmls:
+        if rel=='404.html': continue
+        shown=re.search(r'Last checked: ([0-9]{1,2} [A-Za-z]+ [0-9]{4})', open(os.path.join(OUT,rel)).read()).group(1)
+        loc=BASE+'/'+rel.replace('index.html','')
+        assert f'<loc>{loc}</loc><lastmod>{iso_date(shown)}</lastmod>' in sm, (rel, shown)
     assert png_size(os.path.join(OUT,'og.png'))==(1200,630)
     assert png_size(os.path.join(OUT,'apple-touch-icon.png'))==(180,180)
     svg=open(os.path.join(OUT,'favicon.svg')).read()
@@ -371,6 +400,7 @@ GROUPS=[
   ("regions/southeast-keys/index.html","Southeast and Keys")]),
  ("Fees and rules",[
   ("fees/index.html","Fees and access"),
+  ("state-parks/index.html","State park dumps"),
   ("rules/index.html","Dumping rules")]),
  ("About this guide",[
   ("disclaimer/index.html","Disclaimer"),
@@ -381,14 +411,15 @@ TITLES['index.html']='Home'
 TITLES['404.html']='Page not found'
 ORDER=["regions/panhandle/index.html","regions/north/index.html","regions/central/index.html","regions/tampa-bay-southwest/index.html","regions/southeast-keys/index.html"]
 READ_NEXT={
- "index.html":["regions/tampa-bay-southwest/index.html","fees/index.html","rules/index.html"],
+ "index.html":["state-parks/index.html","fees/index.html","rules/index.html"],
  "regions/panhandle/index.html":["regions/north/index.html","fees/index.html","rules/index.html"],
  "regions/north/index.html":["regions/central/index.html","fees/index.html","rules/index.html"],
  "regions/central/index.html":["regions/tampa-bay-southwest/index.html","fees/index.html","rules/index.html"],
  "regions/tampa-bay-southwest/index.html":["regions/southeast-keys/index.html","fees/index.html","rules/index.html"],
  "regions/southeast-keys/index.html":["fees/index.html","rules/index.html","regions/panhandle/index.html"],
- "fees/index.html":["rules/index.html","regions/tampa-bay-southwest/index.html","disclaimer/index.html"],
- "rules/index.html":["fees/index.html","index.html","disclaimer/index.html"],
+ "fees/index.html":["state-parks/index.html","rules/index.html","disclaimer/index.html"],
+ "state-parks/index.html":["fees/index.html","rules/index.html","index.html"],
+ "rules/index.html":["state-parks/index.html","fees/index.html","index.html"],
  "disclaimer/index.html":["rules/index.html","fees/index.html","find/index.html"],
  "find/index.html":["index.html","fees/index.html","rules/index.html"],
  "404.html":["index.html","find/index.html","rules/index.html"]}
@@ -520,7 +551,7 @@ def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,rob
     def foot_a(href, text):
         cur=' aria-current="page"' if page_href(path)==href else ''
         return f'<a href="{href}"{cur}>{text}</a>'
-    foot=(f'<footer><div class="shell"><nav class="footnav" aria-label="About this guide">{foot_a("/","Home")}{foot_a("/fees/","Fees and access")}{foot_a("/rules/","Dumping rules")}{foot_a("/find/","All pages")}{foot_a("/disclaimer/","Disclaimer")}</nav>'
+    foot=(f'<footer><div class="shell"><nav class="footnav" aria-label="About this guide">{foot_a("/","Home")}{foot_a("/fees/","Fees and access")}{foot_a("/state-parks/","State park dumps")}{foot_a("/rules/","Dumping rules")}{foot_a("/find/","All pages")}{foot_a("/disclaimer/","Disclaimer")}</nav>'
           f'<p class="disclaimer">{e(DISCLAIMER)}</p><p>Independent, unofficial guide. Not affiliated with Florida State Parks, FDOT, the Florida Department of Health, the Florida Department of Environmental Protection, Love\'s or OpenStreetMap. Official listings are linked to the operator page they came from. Community listings come from OpenStreetMap contributors (data &copy; OpenStreetMap contributors, ODbL)'
           +src('osmc')+f'. Dump stations close, change rules and charge new fees without notice: always call ahead. Last checked: {e(when)}.</p></div></footer>')
     article_html=f'<article class="content" aria-labelledby="page-title"><div class="head-block">{head_html}</div>{layout}</article>'
@@ -551,13 +582,14 @@ LEVELS=f'''<div class="card"><strong>Verification levels</strong><ul><li><span c
 cnt={k:sum(1 for x in recs if x['region']==k) for k in REG}
 noff=sum(1 for x in recs if x['level'].startswith('Official')); ncom=len(recs)-noff
 faq=[("Can I dump at a Florida interstate rest area?",f"Not according to any FDOT page we checked. The FDOT rest area page and facility list do not mention dump stations, and FDOT says overnight camping is not permitted and visitors may stay up to three hours{src('fdot','fdotlist')}. Some third-party apps list rest area dumps; we could not confirm those on an official source. The statute, the health rule, and the FDOT rest-area rule are on the <a href=\"/rules/\">dumping rules</a> page."),
-("Can I use a state park dump station if I am not camping there?",f"Usually not stated. Anastasia State Park says its communal dump station is free for park campers{src('anastasia')}. Other park pages we read do not say whether day visitors may dump. Ask the ranger station first."),
+("Can I use a state park dump station if I am not camping there?",f"Some park pages say, and some do not. The Florida State Parks fee schedule lists a dump station fee of $10 per unit for a non-registered camper, and it says to confirm the activity is available at that park{src('fspfee','fspfee2')}. Blue Spring says the fee is $10.65 if you are not a registered camper{src('bluespring')}. Fort Clinch says the stations are free for registered campers and available to day visitors for a fee, and it does not state the amount{src('fortclinch')}. The Manatee Springs home page says the dump station is currently closed, and its amenities page still says a dump station is provided{src('manateehome','manatee')}. The other park pages that state a rule are quoted on the <a href=\"/state-parks/\">state park dump</a> page."),
 ("Do I need a gate code?",f"At some parks, yes. Rainbow Springs says its campground gates are closed at all times and the code is given on your day of arrival{src('rainbow')}."),
 ("Are OpenStreetMap entries reliable?",f"They are community data{src('osm')}. Many Florida entries have no name, fee or access tags. We show them so you know where to look, flagged as Community, and they need a phone call to confirm."),
 ("Is there potable water at the dump?","Rarely stated by official sources. Where an OSM contributor tagged water_point we show it as an OSM tag. Never use the rinse hose for drinking water."),
-("How current is this?",f"All records were collected on {D}. Each row links to its source so you can recheck.")]
+("How current is this?",f"Station rows on this page were collected on {D}. The state park dump page was checked on {SP}. Each row links to its source so you can recheck.")]
 SUMMARIES['index.html']=f'{len(recs)} stations on {D}: {noff} confirmed on an official page, {ncom} community-mapped. Confirm with the operator before you drive there.'
 SUMMARIES['fees/index.html']='Most sources do not publish a dump fee. Below are the only fee statements we found, then a summary of access rules.'
+SUMMARIES['state-parks/index.html']='The fee schedule says $10 per unit for a non-registered camper. Blue Spring says $10.65. Manatee Springs says its dump station is closed. Other park pages quoted here state who may use the station.'
 SUMMARIES['rules/index.html']='Florida law limits where a recreational vehicle may empty black water, grey water, or any other liquid waste. This is an unofficial reading of the public texts, not legal advice.'
 SUMMARIES['disclaimer/index.html']='Station names, locations, fees, access, hours and legal quotations on this site are taken from the linked public sources. Always confirm with the official source or the facility before you act.'
 SUMMARIES['find/index.html']='Every page on this guide, grouped by topic. Use the search box to narrow the list.'
@@ -569,6 +601,7 @@ for k,(n,_cs) in REG.items():
 KW['index.html']=' '.join(c['name'] for c in checked)+' etiquette rest area openstreetmap verification call ahead'
 KW['rules/index.html']='rest area welcome center litter law statute grey water black water wastewater sanitary dump station health department transportation'
 KW['fees/index.html']='fee access campers loves love state park customers potable water'
+KW['state-parks/index.html']='state park campers day visitor non-registered fee hours closure koreshan oscar scherer blue spring fort clinch anastasia gamble rogers florida caverns little talbot kissimmee prairie collier seminole manatee springs'
 KW['disclaimer/index.html']='liability warranty affiliation accuracy corrections'
 KW['find/index.html']='index search all pages topics'
 def jump(path, label=None):
@@ -588,6 +621,7 @@ GUIDE=f'''<h2>Start here</h2>
 <h2>Pick a region</h2><ul class="grid">{region_items}</ul></li>
 <li class="period"><h3 id="{slug("Fees and rules")}">Fees and rules</h3>
 <p><a href="/fees/">Dump station fees and who can use them</a></p>
+<p><a href="/state-parks/">Who may use a Florida State Park dump station</a></p>
 <p><a href="/rules/">Where you can and cannot dump RV waste in Florida</a></p></li>
 <li class="period"><h3 id="{slug("About this guide")}">About this guide</h3>
 <ul class="link-grid"><li>{jump("disclaimer/index.html")}</li><li>{jump("find/index.html")}</li></ul></li>
@@ -597,6 +631,7 @@ GUIDE=f'''<h2>Start here</h2>
 <ul class="tasks">
 <li><a class="jump" href="#how-to-use-a-dump-station"><span class="lt">How to use a dump station</span><span class="ls">Six steps for emptying tanks at a station. Always follow posted signs at the station.</span></a></li>
 <li><a class="jump" href="/fees/"><span class="lt">Dump station fees and who can use them</span><span class="ls">{H.escape(SUMMARIES["fees/index.html"])}</span></a></li>
+<li><a class="jump" href="/state-parks/"><span class="lt">Who may use a Florida State Park dump station</span><span class="ls">{H.escape(SUMMARIES["state-parks/index.html"])}</span></a></li>
 <li><a class="jump" href="/rules/"><span class="lt">Where you can and cannot dump RV waste in Florida</span><span class="ls">{H.escape(SUMMARIES["rules/index.html"])}</span></a></li>
 <li><a class="jump" href="#etiquette"><span class="lt">Etiquette</span><span class="ls">Be quick when others are waiting. Never use the rinse hose to fill your fresh water tank.</span></a></li>
 <li><a class="jump" href="#short-faq"><span class="lt">Short FAQ</span><span class="ls">Rest areas, day visitors, gate codes, OpenStreetMap, drinking water, and how current this list is.</span></a></li>
@@ -626,7 +661,7 @@ REGION_SEO={
 "southeast-keys":("RV dump stations in the Southeast and Keys, Florida","Sourced RV dump stations in the Southeast and the Keys, with fees, access, potable water, hours and links to operator pages or OpenStreetMap.")}
 for k,(n,cs) in REG.items():
     rows=[x for x in recs if x['region']==k]
-    b=f'<h1>RV dump stations: {n}</h1><p>{len(rows)} stations. Counties in this region: {", ".join(c.replace("_"," ") for c in cs.split())}.</p>{CALL}'+table(rows)+LEVELS+'<p><a href="/">All regions</a> | <a href="/fees/">Fees</a> | <a href="/rules/">Dumping rules</a></p>'
+    b=f'<h1>RV dump stations: {n}</h1><p>{len(rows)} stations. Counties in this region: {", ".join(c.replace("_"," ") for c in cs.split())}.</p>{CALL}'+table(rows)+LEVELS+'<p><a href="/">All regions</a> | <a href="/fees/">Fees</a> | <a href="/state-parks/">State park dumps</a> | <a href="/rules/">Dumping rules</a></p>'
     rt,rd=REGION_SEO[k]
     page(f'regions/{k}/index.html',rt,b,rd,crumbs=[("Home",BASE+"/"),(n,BASE+f"/regions/{k}/")])
 fr=[x for x in recs if x['fee']!='Not stated by source']
@@ -634,12 +669,130 @@ fb=f'''<h1>Florida RV dump station fees and access</h1><p>Most sources do not pu
 <h2>Fees that a source states</h2><div class="wrap"><table><tr><th scope="col">Station</th><th scope="col">County</th><th scope="col">Fee</th><th scope="col">Who can use it</th><th scope="col">Verification</th></tr>'''+''.join(f'<tr><td>{H.escape(x["name"])}</td><td>{x["county"]}</td><td>{H.escape(x["fee"])}</td><td>{H.escape(x["access"])}</td><td>{x["level"]} <span class="src">[<a href="{x["source"]}" rel="noopener">source</a>]</span></td></tr>' for x in fr)+f'''</table></div>
 <p>{len(recs)-len(fr)} of {len(recs)} stations: fee not stated by source.</p>
 <h2>Access summary</h2><div class="card"><ul>
-<li>Florida State Parks dump stations are described as campground amenities. Anastasia says free for park campers{src('anastasia')}. Day-visitor use is not stated on the other park pages we read. Rainbow Springs says a day-use reservation program began on April 29, 2026, and that all visitors need a reservation to enter the park. That page does not say a day visitor may use the dump station{src('rainbow')}. State park camping reservations: 800-326-3521{src('fspres')}.</li>
+<li>Florida State Parks dump stations are described as campground amenities. Anastasia says free for park campers{src('anastasia')}. Where a park page states who may use the station, what a non-camper pays, or that a station is closed, the quotes are on the <a href="/state-parks/">state park dump</a> page (checked {SP}). Rainbow Springs says a day-use reservation program began on April 29, 2026, and that all visitors need a reservation to enter the park. That page does not say a day visitor may use the dump station{src('rainbow')}. State park camping reservations: 800-326-3521{src('fspres')}.</li>
 <li>Love's lists RV Dump Service among amenities at the four Florida locations we checked; price not stated on the location page{src('loves')}.</li>
 <li>FDOT rest areas: no dump stations stated{src('fdot')}.</li>
 <li>OpenStreetMap access tags: {sum(1 for x in recs if x['access'].startswith('Customers'))} customers only, {sum(1 for x in recs if x['access'].startswith('Public'))} public, rest not stated{src('osm')}.</li></ul></div>
-<p>For the statute and the Department of Health rule on where a tank may be emptied, see <a href="/rules/">where you can and cannot dump</a>.</p>'''
+<p>For the statute and the Department of Health rule on where a tank may be emptied, see <a href="/rules/">where you can and cannot dump</a>. For who may use a state park station, see <a href="/state-parks/">state park dump stations</a>.</p>'''
 page('fees/index.html',"Florida RV dump station fees and access, with sources",fb,"Which Florida RV dump stations state a fee, who may use them, and how access is described on operator pages and OpenStreetMap tags.",crumbs=[("Home",BASE+"/"),("Fees",BASE+"/fees/")])
+sp=f'''<h1>Who may use a Florida State Park dump station</h1>
+<p>This page quotes Florida State Parks pages that say who may use a dump station, what a person who is not a registered camper pays, or that a station is closed. It is not a list of every state park dump station. A page that only says a station exists is not given a row. This page does not use OpenStreetMap or any other community listing.</p>
+{CALL}
+<h2>What the fee schedule says</h2>
+<div class="card">
+<p>The Division of Recreation and Parks posts fee-schedule PDFs on floridastateparks.org. On {SP}, two files whose names include 2021_05_10 were read. One of those file names also includes 05.2022. Both contain this line: "Dump Station Per unit, non-registered campers $10.00". The two files are not the same in every section. The difference found is about an adoptive-family entrance pass, not the dump station. A third posted file, whose name includes 2013_10_01, contains the same dump-station line.{src('fspfee','fspfee2','fspfee2013')}</p>
+<p>The schedule says fees are per day unless otherwise noted. The dump line says "Per unit". It does not define a unit beyond those words. The dump line is not marked with the double asterisk the schedule uses for "Includes all state and local taxes."</p>
+<p>The schedule also says: "Please confirm the recreational activity in which you want to participate is available at the location and on the date you plan to visit. Prices and availability subject to change without notice. County surcharges may apply." It gives the statewide information line as (850) 245-2157. It does not say that every park has a dump station. It does not say a registered camper pays nothing. It does not say whether a park entrance fee is charged in addition to the $10.</p>
+<p>The schedule says this authority comes from Chapter 258, Florida Statutes, and Rule 62D-2.014, Florida Administrative Code. Section 258.014(1)(a) says the Division of Recreation and Parks "shall have the power to charge reasonable fees, rentals, or charges for the use or operation of facilities and concessions in state parks." That section does not name a dump station and does not set a dollar amount.{src('s258014')}</p>
+</div>
+<h2>Where official pages do not match</h2>
+<div class="card">
+<p>Blue Spring State Park says: "The fee is $10.65 to use the dump station if you are not a registered camper." The fee schedule says $10.00 per unit for non-registered campers. Both are Florida State Parks sources. They do not match. Neither page says that $10.65 is $10 plus tax, so this page does not treat it that way.{src('bluespring','fspfee')}</p>
+<p>The Manatee Springs State Park home page says: "Effective Jan. 14, 2026: The Waterfront Restroom and dump station at Manatee Springs State Park are currently closed." The experiences and amenities page says: "There is no sewer hook-up in Magnolia 2 or Hickory but a dump station is provided." The home page does not say that another dump station remains open. The amenities page does not say the station is closed.{src('manateehome','manatee')}</p>
+</div>
+<h2>Parks that state who may use the station</h2>
+<p>A row is included only when that park's own page states who may use the station or what a person who is not a registered camper pays. "Not stated" means that page does not say it. None of these hours pages states a separate opening time for the dump station. The hours below are the park hours on the hours page.</p>
+<div class="wrap"><table>
+<tr><th scope="col">Park</th><th scope="col">What the park page says</th><th scope="col">Fee on the park page</th><th scope="col">Park hours on the hours page</th></tr>
+<tr>
+<td><a href="{S['anastasia']}" rel="noopener">Anastasia State Park</a></td>
+<td>"A communal dump station is free for park campers." The page does not say whether a person who is not a park camper may use it.</td>
+<td>Not stated on the park page.</td>
+<td>Open from 8 a.m. until sundown, 365 days a year. The hours page does not mention the dump station. Campers arriving after sunset are told to call 904-461-2033 on the day of arrival. That instruction is for campers.</td>
+</tr>
+<tr>
+<td><a href="{S['bluespring']}" rel="noopener">Blue Spring State Park</a></td>
+<td>"The dump station is located in the campground." The same page also says "A dump station is available in the park." It says: "The fee is $10.65 to use the dump station if you are not a registered camper." It also says: "A new day-use reservation program will be implemented at Blue Spring State Park beginning July 15, 2026. The window for advanced reservations opens July 8, 2026. All day-use visitors will be required to have a reservation to enter the park." It does not say that reservation is permission to use the dump station.</td>
+<td>$10.65 if you are not a registered camper. The fee schedule says $10.00. See the section above. The hours page does not repeat the $10.65. It says the RV utility fee includes water and electricity, and it does not mention the dump station.</td>
+<td>Open from 8 a.m. until sundown, 365 days a year.</td>
+</tr>
+<tr>
+<td><a href="{S['collier']}" rel="noopener">Collier-Seminole State Park</a></td>
+<td>"A centralized dump station is available for RV campers." The page does not say whether a person who is not an RV camper may use it. The park home page uses the words "A dump station is available for RV campers."</td>
+<td>Not stated. The hours page does not mention the dump station. It says the nightly utility fee includes water, electricity and sewer. That line does not say "dump station."</td>
+<td>8 a.m. until sunset, 365 days a year. The park page gives the address as 20200 Tamiami Trail E. Naples FL 34114, and the amenities page gives the ranger station phone as (239) 393-7306.</td>
+</tr>
+<tr>
+<td><a href="{S['caverns']}" rel="noopener">Florida Caverns State Park</a></td>
+<td>The equestrian section says three RV or trailer sites do not have sewer hookups, then: "Use of a communal dump station located at the entrance to the youth camp is free for park campers." The page does not say whether a day visitor may use it.</td>
+<td>Not stated for a person who is not a park camper. The hours page says the nightly utility fee includes water, electricity and sewer. It does not mention the dump station.</td>
+<td>The day-use portion is open daily, 8 a.m. until sunset CST.</td>
+</tr>
+<tr>
+<td><a href="{S['fortclinch']}" rel="noopener">Fort Clinch State Park</a></td>
+<td>"Both campgrounds have a dump station." "The dump station facilities are free of charge to registered campers, and they are also available for day visitors for a fee."</td>
+<td>The park page does not state the dollar amount. The hours page does not mention the dump station.</td>
+<td>Open 8 a.m. to sunset daily.</td>
+</tr>
+<tr>
+<td><a href="{S['gamble']}" rel="noopener">Gamble Rogers Memorial State Recreation Area, Flagler Beach</a></td>
+<td>"A communal dump station is free to park campers." The page does not say whether a person who is not a park camper may use it.</td>
+<td>Not stated for a person who is not a park camper. The hours page does not mention the dump station. It says the nightly utility fee includes water, electricity and sewer. That line does not say "dump station."</td>
+<td>Open 8 a.m. until sundown, 365 days a year.</td>
+</tr>
+<tr>
+<td><a href="{S['kissimmee']}" rel="noopener">Kissimmee Prairie Preserve State Park</a></td>
+<td>The hours page ties dump use to the RV utility fee. It does not say that a day visitor may use the station, and it does not say that a tent camper may use it.</td>
+<td>"$7 nightly utility fee for RV units. Utility fees include water, electricity and use of dump station. Utility fee does not apply to tent camping." A fee for a person who is not camping is not stated.</td>
+<td>Open 8 a.m. until sundown, 365 days a year.</td>
+</tr>
+<tr>
+<td><a href="{S['koreshan']}" rel="noopener">Koreshan State Park</a></td>
+<td>"$10 dump station use plus entrance fee for those not registered as campers."</td>
+<td>$10, plus the entrance fee, for people who are not registered campers. Admission on the same page is $5 per vehicle (two to eight people), $4 for a single-occupant vehicle, and $2 for pedestrians, bicyclists, extra passengers, and passengers in a vehicle with the holder of an Annual Individual Entrance Pass. The fee schedule does not mention an entrance fee in the dump line.</td>
+<td>Open 8 a.m. until sunset, 365 days a year. The camping office is open daily 9 a.m. until 5 p.m. The page does not say those office hours are the dump-station hours.</td>
+</tr>
+<tr>
+<td><a href="{S['littlet']}" rel="noopener">Little Talbot Island State Park</a></td>
+<td>The camping section says: "A dump station is available at the campground exit for RV campers." The RV section on the same page says: "A dump station is available at the campground exit." It does not repeat "for RV campers." The page does not say whether a day visitor may use the station. The same page says the campground playground, the campground canoe and kayak launch, and the Campground Nature Trail are for registered campers only, with no day-visitor use. It does not put that sentence on the dump station.</td>
+<td>Not stated. The hours page does not mention the dump station. It says the nightly utility fee includes water, electricity and sewer. That line does not say "dump station."</td>
+<td>Open from 8 a.m. until sunset, 365 days a year.</td>
+</tr>
+<tr>
+<td><a href="{S['oscar']}" rel="noopener">Oscar Scherer State Park</a></td>
+<td>"Dump station, non-registered campers $10. Does not include park entrance fee."</td>
+<td>$10 for non-registered campers. The same page says that amount does not include the park entrance fee. Admission on that page is $5 per vehicle (up to eight people), $4 for a single-occupant vehicle, and $2 for pedestrians, bicyclists, extra passengers, and passengers in a vehicle with the card holder of an Annual Individual Entrance Pass. Sunset entrance is $4 per vehicle, for entry one hour prior to sunset. The dump bullet does not say the sunset rate applies to dumping.</td>
+<td>Open 8 a.m. until sundown, 365 days a year.</td>
+</tr>
+</table></div>
+<p>Hours pages: Anastasia, Blue Spring, Collier-Seminole, Florida Caverns, Fort Clinch, Gamble Rogers, Kissimmee Prairie, Koreshan, Little Talbot Island, and Oscar Scherer.{src('anastasiah','bluespringh','collierh','cavernsh','fortclinchh','gambleh','kissimmee','koreshan','littleth','oscar')}</p>
+<p>The Collier-Seminole address is on the park page.{src('https://www.floridastateparks.org/parks-and-trails/collier-seminole-state-park')}</p>
+<h2>A station the park page says is closed</h2>
+<div class="card">
+<p>Manatee Springs State Park, 11650 N.W. 115 St. Chiefland FL 32626. Phone 352-493-6072. The park page lists the hours as 8 a.m. to sunset, 365 days a year.{src('manateehome')}</p>
+<p>That page says the waterfront restroom and dump station are currently closed, effective Jan. 14, 2026. The amenities page still says a dump station is provided for the Magnolia 2 and Hickory loops, which have no sewer hookup, and it does not say who may use it. Read both pages before you drive there. The two statements are also in the section above.{src('manateehome','manatee')}</p>
+</div>
+<h2>What these pages do not say</h2>
+<div class="card">
+<ul>
+<li>No hours page in the table states a separate opening time for the dump station.</li>
+<li>The fee schedule does not say registered campers pay nothing. "Free" is included above only where a park page says free.</li>
+<li>The camping page says: "Full-facility campsites for tent campers and RVers include water, electricity, a grill and picnic table, along with centralized showers, restrooms and dump station." It does not name the parks. It does not state a fee, and it does not say a day visitor may use the station. It gives the reservation phone as 800-326-3521 or TDD 888-433-0287.{src('fspcamp')}</li>
+<li>The Florida State Parks FAQ says: "Most parks have a central dump station." It does not name the parks, and it does not say who may use one.{src('fspfaq')}</li>
+<li>A park page that only says a dump station exists, and does not say who may use it, is not in the table. Stations this guide already quoted from an operator page stay on the <a href="/">regional lists</a>.</li>
+<li>Nothing on this page comes from OpenStreetMap or another community listing.</li>
+</ul>
+</div>
+<h2>Sources read on 27 October 2026</h2>
+<div class="card"><ul>
+<li><a href="{S['fspfee']}" rel="noopener">Florida State Parks fee schedule</a> (file name includes 2021_05_10) and the <a href="{S['fspfee2']}" rel="noopener">05.2022 copy</a></li>
+<li><a href="{S['fspfee2013']}" rel="noopener">Fee schedule file whose name includes 2013_10_01</a></li>
+<li><a href="{S['s258014']}" rel="noopener">Section 258.014, Florida Statutes</a> (2026)</li>
+<li><a href="{S['fspcamp']}" rel="noopener">Florida State Parks camping page</a> and <a href="{S['fspfaq']}" rel="noopener">FAQ</a></li>
+<li><a href="{S['anastasia']}" rel="noopener">Anastasia</a> amenities and <a href="{S['anastasiah']}" rel="noopener">hours</a></li>
+<li><a href="{S['bluespring']}" rel="noopener">Blue Spring</a> amenities and <a href="{S['bluespringh']}" rel="noopener">hours</a></li>
+<li><a href="{S['collier']}" rel="noopener">Collier-Seminole</a> amenities, <a href="{S['collierh']}" rel="noopener">hours</a>, and <a href="https://www.floridastateparks.org/parks-and-trails/collier-seminole-state-park" rel="noopener">park page</a></li>
+<li><a href="{S['caverns']}" rel="noopener">Florida Caverns</a> amenities and <a href="{S['cavernsh']}" rel="noopener">hours</a></li>
+<li><a href="{S['fortclinch']}" rel="noopener">Fort Clinch</a> amenities and <a href="{S['fortclinchh']}" rel="noopener">hours</a></li>
+<li><a href="{S['gamble']}" rel="noopener">Gamble Rogers</a> amenities and <a href="{S['gambleh']}" rel="noopener">hours</a></li>
+<li><a href="{S['kissimmee']}" rel="noopener">Kissimmee Prairie hours and fees</a></li>
+<li><a href="{S['koreshan']}" rel="noopener">Koreshan hours and fees</a></li>
+<li><a href="{S['littlet']}" rel="noopener">Little Talbot Island</a> amenities and <a href="{S['littleth']}" rel="noopener">hours</a></li>
+<li><a href="{S['oscar']}" rel="noopener">Oscar Scherer hours and fees</a></li>
+<li><a href="{S['manateehome']}" rel="noopener">Manatee Springs park page</a> and <a href="{S['manatee']}" rel="noopener">amenities</a></li>
+</ul></div>
+<p><a href="/fees/">Fees and access</a> | <a href="/rules/">Dumping rules</a> | <a href="/">Stations by region</a></p>'''
+page('state-parks/index.html',"Florida State Park dump stations: access, fees, hours",sp,"Who may use a Florida State Park RV dump station, the published fee for a non-registered camper, and park pages that state another amount or a closure.",SP,crumbs=[("Home",BASE+"/"),("State park dumps",BASE+"/state-parks/")])
 RULES_D="26 October 2026"
 rb=f"""<h1>Where you can and cannot dump RV waste in Florida</h1>
 <p>Florida law limits where a recreational vehicle may empty black water, grey water, or any other liquid waste. This page quotes the statute, the Department of Health park rule, the Florida Litter Law, the sanitary-nuisance statute, the pollution statute, and the FDOT rest-area rule. It is an unofficial reading of those public texts, not legal advice and not a statement by any agency. Read the linked sections.</p>
@@ -681,7 +834,7 @@ rb=f"""<h1>Where you can and cannot dump RV waste in Florida</h1>
 <li>Keep black water and grey water in the holding tanks until you reach a sewerage system approved by the Department of Health. Section 513.08 does not allow any other emptying. Section 403.413(5) separately prohibits dumping raw human waste from a motor vehicle onto the lands or waters of the state unless authorized by law or permit.</li>
 <li>If you are a guest at a permitted recreational vehicle park, ask the office where occupants empty tanks. Section 513.08(2) puts that duty on the operator. If the site has a sewer connection, Rule 64E-15.004(3) says the connection shall be self draining and leak proof from liquids and gases and be connected by means of a readily removable, acid resistant material. Subsection (4) says the connection point for all sewer outlets shall be tightly capped when not in use. A park can be exempt from a separate dump station only when the owner has filed the full-hookup letter described in Rule 64E-15.005(6).</li>
 <li>Inside a park or camp, Rule 64E-15.004(1) allows a transportable wastewater container or a cassette-type toilet only on the conditions in that subsection. The container must be specifically designed and sold for holding and transporting wastewater, with a tight-capping lid and watertight connections that under normal use will not leak or spill. Waste from hand washing sinks, kitchen sinks, and showers may go into a transportable wastewater container. Toilet waste may not. A cassette-type portable toilet may hold toilet waste if the storage container can be sealed so it will not leak or spill during transportation. Both must be transported to an approved disposal site without leakage, spillage, or a sanitary nuisance. If waste spills on the ground, the person transporting the tank shall immediately notify park management. The rule makes park managers responsible for enforcement and requires a disinfection protocol on file. It does not name a roadside, a rest area, or a storm drain as an approved disposal site.</li>
-<li>Drive to a dump station that discharges to an approved system, and call ahead. Regional lists on this site separate official operator pages from community points. Many Florida State Parks pages describe the station as a campground amenity and do not say that a day visitor may use it. Anastasia State Park says: "A communal dump station is free for park campers."{src('anastasia')}</li>
+<li>Drive to a dump station that discharges to an approved system, and call ahead. Regional lists on this site separate official operator pages from community points. Many Florida State Parks pages describe the station as a campground amenity and do not say that a day visitor may use it. Anastasia State Park says: "A communal dump station is free for park campers."{src('anastasia')} Parks that do state a rule are quoted on the <a href="/state-parks/">state park dump</a> page.</li>
 <li>The statutes and rules quoted on this page do not describe a statewide mobile pump-out for a traveler stopped on the roadside. They also do not authorize emptying a tank on the ground while waiting.</li>
 </ol>
 <p><a href="/">Stations by region</a> | <a href="/fees/">Fees and who can use a station</a></p>
@@ -741,6 +894,7 @@ nb='''<h1>Page not found</h1>
 <li><a href="/regions/tampa-bay-southwest/">Tampa Bay and Southwest</a></li>
 <li><a href="/regions/southeast-keys/">Southeast and Keys</a></li>
 <li><a href="/fees/">Fees and access</a></li>
+<li><a href="/state-parks/">State park dumps</a></li>
 <li><a href="/rules/">Dumping rules</a></li>
 <li><a href="/find/">All pages</a></li>
 <li><a href="/disclaimer/">Disclaimer</a></li>
