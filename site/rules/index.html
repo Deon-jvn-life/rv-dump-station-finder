@@ -118,18 +118,8 @@ h1,h2,h3,h4{max-width:65ch}
 .inshort{background:#eef4f1;border-left:6px solid #1d4f3e;border-radius:12px;padding:var(--space-16);margin:0 0 var(--space-24)}
 .inshort p{margin:0}
 .layout{display:flex;flex-direction:column;gap:var(--space-24);min-width:0;margin-top:var(--space-24)}
-.toc{order:-1}
-.rest{order:0;min-width:0}
+.rest{min-width:0}
 .rest>h2:first-child{margin-top:0}
-@media(min-width:960px){
-.layout.has-toc{display:grid;grid-template-columns:minmax(0,1fr) 18rem;column-gap:var(--space-32);align-items:start}
-.layout.has-toc .rest{grid-column:1;grid-row:1;order:0}
-.layout.has-toc .toc{grid-column:2;grid-row:1;order:0;position:sticky;top:var(--scroll-pad);max-height:calc(100vh - var(--scroll-pad) - var(--space-16));overflow:auto}
-}
-.toc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:var(--space-12) var(--space-16) var(--space-16);margin:0}
-.toc summary{min-height:44px;display:flex;align-items:center;font-weight:700;cursor:pointer;font-size:1.25rem;line-height:1.25}
-.toc ul{list-style:none;margin:0;padding:0 0 var(--space-12)}
-.toc a{display:flex;align-items:center;min-height:44px;padding:var(--space-12) 0}
 .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:var(--space-16);margin:0 0 var(--space-16);max-width:none}
 h2+.card,h3+.card,.head-block .card:first-of-type{margin-top:0}
 .card>:first-child{margin-top:0}
@@ -199,7 +189,7 @@ footer .shell{padding-top:var(--space-32);padding-bottom:var(--space-40)}
 .dirs{display:inline-flex;align-items:center;min-height:44px;margin-left:var(--space-12)}
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(forced-colors:active){
-.card,.inshort,p.disclaimer,.jump,.period,.toc,.pn a,.search-toggle,.grp>summary,.loc-map{border:1px solid CanvasText}
+.card,.inshort,p.disclaimer,.jump,.period,.pn a,.search-toggle,.grp>summary,.loc-map{border:1px solid CanvasText}
 :focus-visible,#site-header :focus-visible{outline:3px solid Highlight;box-shadow:none}
 }
 @media(max-width:359px){.shell{padding-left:var(--space-12);padding-right:var(--space-12)}}
@@ -207,7 +197,7 @@ footer .shell{padding-top:var(--space-32);padding-bottom:var(--space-40)}
 <p>Florida law limits where a recreational vehicle may empty black water, grey water, or any other liquid waste. This page quotes the statute, the Department of Health park rule, the Florida Litter Law, the sanitary-nuisance statute, the pollution statute, and the FDOT rest-area rule. It is an unofficial reading of those public texts, not legal advice and not a statement by any agency. Read the linked sections.</p>
 <p>The facts on this page come from the official sources linked below. This page does not use OpenStreetMap or any other community listing.</p>
 <div class="card note"><strong>Call ahead.</strong> Hours, fees, gate codes and who may use a station change often, and many park stations are for registered campers only. Confirm with the operator before you drive there.</div>
-</div><div class="layout has-toc"><nav class="toc" aria-label="On this page"><details class="toc-details" open><summary>On this page</summary><ul><li><a href="#emptying-an-rv-tank">Emptying an RV tank</a></li><li><a href="#what-a-lawful-park-dump-station-is">What a lawful park dump station is</a></li><li><a href="#ground-ditches-storm-drains-and-open-water">Ground, ditches, storm drains, and open water</a></li><li><a href="#fdot-rest-areas-welcome-centers-and-service-plazas">FDOT rest areas, welcome centers, and service plazas</a></li><li><a href="#when-no-dump-station-is-close">When no dump station is close</a></li><li><a href="#official-sources-read-on-26-october-2026">Official sources read on 26 October 2026</a></li></ul></details></nav><div class="rest"><h2 id="emptying-an-rv-tank">Emptying an RV tank</h2>
+</div><div class="layout"><div class="rest"><h2 id="emptying-an-rv-tank">Emptying an RV tank</h2>
 <div class="card">
 <p>Section 513.08(1), Florida Statutes, says: "It is unlawful to empty any receptacle or fixture containing human excreta, human urine, or any other liquid waste from a mobile home or recreational vehicle or at a recreational campsite except into a sewerage system approved by the department."</p>
 <p>The prohibition is not limited to the toilet tank. It covers any other liquid waste from the recreational vehicle, which includes what travelers usually call grey water.</p>
