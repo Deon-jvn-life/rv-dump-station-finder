@@ -280,6 +280,9 @@ def verify_site():
         assert 'src="/_vercel/insights/script.js"' in text, rel
         assert "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" in text, rel
         assert 'scroll-margin-top:var(--scroll-pad)' in text, rel
+        assert 'On this page' not in text, rel
+        assert 'class="toc"' not in text and 'has-toc' not in text and 'toc-details' not in text, rel
+        assert '.toc{' not in text and '.toc,' not in text, rel
         assert 'id="read-next"' in text, rel
         assert 'id="q"' in text, rel
         if 'id="loc-map"' in text:
@@ -517,11 +520,6 @@ def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,rob
     if summary and path!='404.html' and '</h1>' in body:
         body=body.replace('</h1>','</h1><div class="inshort"><p><strong>In short.</strong> '+H.escape(summary)+'</p></div>',1)
     body=re.sub(r'<h2>(.*?)</h2>', lambda m: f'<h2 id="{slug(m.group(1))}">{m.group(1)}</h2>', body)
-    h2s=re.findall(r'<h2 id="([^"]*)">(.*?)</h2>', body)
-    toc=''
-    if len(h2s)>=2:
-        lis=''.join(f'<li><a href="#{i}">{H.escape(H.unescape(re.sub(r"<[^>]+>","",inner)))}</a></li>' for i,inner in h2s)
-        toc=f'<nav class="toc" aria-label="On this page"><details class="toc-details" open><summary>On this page</summary><ul>{lis}</ul></details></nav>'
     def step_link(target, kind):
         label=TITLES.get(target)
         if not label: return ''
@@ -545,12 +543,7 @@ def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,rob
     head_html, rest = split_at_first_h2(body)
     tail=pn+readnext
     rest=(rest+tail) if rest else tail
-    if toc:
-        layout=f'<div class="layout has-toc">{toc}<div class="rest">{rest}</div></div>'
-    elif rest:
-        layout=f'<div class="layout"><div class="rest">{rest}</div></div>'
-    else:
-        layout=''
+    layout=f'<div class="layout"><div class="rest">{rest}</div></div>' if rest else ''
     blocks=[]
     if path=='index.html':
         blocks.append(website_ld(desc)); blocks.append(organization_ld())
