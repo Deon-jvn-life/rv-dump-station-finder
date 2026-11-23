@@ -104,9 +104,12 @@
   var docked=false;
   var fullH=0;
   var compactH=0;
+  function isNarrow(){
+    return window.matchMedia("(max-width: 959px)").matches;
+  }
   function setSearchOpen(open){
     if(!search||!toggle) return;
-    if(open && !document.body.classList.contains("is-docked")) open=false;
+    if(open && !document.body.classList.contains("is-docked") && !isNarrow()) open=false;
     search.classList.toggle("is-open", open);
     toggle.setAttribute("aria-expanded", open?"true":"false");
     if(open){
@@ -124,7 +127,7 @@
     document.documentElement.style.setProperty("--panel-top", header.getBoundingClientRect().bottom+"px");
   }
   function applyPad(){
-    var h=compactH||header.getBoundingClientRect().height;
+    var h=isNarrow()?header.getBoundingClientRect().height:(compactH||header.getBoundingClientRect().height);
     var pad=Math.ceil(h+12);
     document.documentElement.style.setProperty("--scroll-pad", pad+"px");
     setPanelTop();
@@ -135,6 +138,7 @@
     fullH=header.offsetHeight;
   }
   function measureCompact(){
+    if(isNarrow()) return header.offsetHeight;
     var was=document.body.classList.contains("is-docked");
     document.body.classList.add("is-docked");
     var h=header.offsetHeight;
@@ -183,6 +187,11 @@
     applyPad();
   }
   function onScroll(){
+    if(isNarrow()){
+      if(docked) undock();
+      applyPad();
+      return;
+    }
     var y=window.scrollY||document.documentElement.scrollTop||0;
     if(!fullH) measure();
     var line=Math.max(24, fullH-compactH);
@@ -231,7 +240,7 @@
   });
   document.addEventListener("focusin", function(e){
     var t=e.target;
-    if(!t||!docked) return;
+    if(!t||(!docked && !isNarrow())) return;
     if(nav && nav.contains(t) && nav.scrollWidth>nav.clientWidth+8 && t.closest){
       var grp=t.closest(".grp");
       if(grp){

@@ -230,9 +230,24 @@ def assets():
     open(os.path.join(OUT,'favicon.svg'),'w').write(FAVICON)
     w,h,buf=render_icon(); write_png(os.path.join(OUT,'apple-touch-icon.png'),w,h,buf)
     w,h,buf=render_og(); write_png(os.path.join(OUT,'og.png'),w,h,buf)
+    photodir=os.path.join(HERE,'photos')
+    if os.path.isdir(photodir):
+        shutil.copytree(photodir, os.path.join(OUT,'photos'))
 def png_size(path):
     d=open(path,'rb').read(24); assert d[:8]==b'\x89PNG\r\n\x1a\n'
     return struct.unpack('>II', d[16:24])
+def webp_size(path):
+    d=open(path,'rb').read(40)
+    assert d[:4]==b'RIFF' and d[8:12]==b'WEBP', path
+    if d[12:16]==b'VP8X':
+        return 1+int.from_bytes(d[24:27],'little'), 1+int.from_bytes(d[27:30],'little')
+    if d[12:16]==b'VP8L':
+        b0,b1,b2,b3=d[21:25]
+        return 1+(((b1&0x3F)<<8)|b0), 1+(((b3&0xF)<<10)|(b2<<2)|((b1&0xC0)>>6))
+    if d[12:16]==b'VP8 ':
+        w,h=struct.unpack_from('<HH', d, 26)
+        return w & 0x3fff, h & 0x3fff
+    raise SystemExit('unknown webp '+path)
 def verify_site():
     htmls=[]
     for dp,_,fs in os.walk(OUT):
@@ -242,7 +257,11 @@ def verify_site():
         text=open(os.path.join(OUT,rel)).read()
         assert '\u2014' not in text and '\u2013' not in text, rel
         assert 'Florida, Florida' not in text, rel
-        assert text.count(DISCLAIMER)>=2, rel
+        assert text.count(DISCLAIMER)==1, (rel, text.count(DISCLAIMER))
+        assert text.find(DISCLAIMER)>text.find('<footer'), rel
+        assert 'class="checked-line"' in text, rel
+        assert 'class="checked"' not in text, rel
+        assert text.find('<h1')<text.find('class="checked-line"'), rel
         assert 'href="/disclaimer/"' in text and 'href="/favicon.svg"' in text and 'href="/apple-touch-icon.png"' in text, rel
         assert 'property="og:image" content="'+BASE+'/og.png"' in text, rel
         assert 'property="og:image:width" content="1200"' in text and 'property="og:image:height" content="630"' in text, rel
@@ -315,6 +334,17 @@ def verify_site():
         assert f'<loc>{loc}</loc><lastmod>{iso_date(shown)}</lastmod>' in sm, (rel, shown)
     assert png_size(os.path.join(OUT,'og.png'))==(1200,630)
     assert png_size(os.path.join(OUT,'apple-touch-icon.png'))==(180,180)
+    parks=open(os.path.join(OUT,'state-parks','index.html'),encoding='utf-8').read()
+    imgs=re.findall(r'<img src="(/photos/[^"]+\.webp)" width="(\d+)" height="(\d+)" alt="([^"]+)">', parks)
+    assert len(imgs)==3, imgs
+    for src,w,h,alt in imgs:
+        assert alt and 'dump station' not in alt.lower()
+        fp=os.path.join(OUT, src.lstrip('/'))
+        assert os.path.isfile(fp), src
+        aw,ah=webp_size(fp)
+        assert (aw,ah)==(int(w),int(h)), (src, aw, ah, w, h)
+    assert parks.count('does not show the dump station')>=3
+    assert 'CC0' in parks and 'Public domain' in parks
     svg=open(os.path.join(OUT,'favicon.svg')).read()
     assert svg.strip().startswith('<svg') and '\u2014' not in svg and '\u2013' not in svg
     check_contrast()
@@ -517,8 +547,12 @@ def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,rob
     summary=SUMMARIES.get(path,'')
     if '<h1>' in body:
         body=body.replace('<h1>','<h1 id="page-title">',1)
-    if summary and path!='404.html' and '</h1>' in body:
-        body=body.replace('</h1>','</h1><div class="inshort"><p><strong>In short.</strong> '+H.escape(summary)+'</p></div>',1)
+    under=''
+    if '</h1>' in body:
+        under='<p class="checked-line">Last checked: '+H.escape(when)+'</p>'
+        if summary and path!='404.html':
+            under+='<div class="inshort"><p><strong>In short.</strong> '+H.escape(summary)+'</p></div>'
+        body=body.replace('</h1>','</h1>'+under,1)
     body=re.sub(r'<h2>(.*?)</h2>', lambda m: f'<h2 id="{slug(m.group(1))}">{m.group(1)}</h2>', body)
     def step_link(target, kind):
         label=TITLES.get(target)
@@ -567,8 +601,8 @@ def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,rob
     head.append('<style>'+CSS+'</style><script defer src="/_vercel/insights/script.js"></script></head>')
     brand_cur=' aria-current="page"' if path=='index.html' else ''
     header=(f'<div id="head-slot"><header id="site-header"><div class="shell">'
-        f'<div class="brand-block"><a class="brand" href="/"{brand_cur}>{MARK}<span class="name-main">Florida RV Dump Stations</span><span class="name-compact">Dump stations</span></a>'
-        f'<p class="name-sub">Independent guide. Not a government website.</p></div>'
+        f'<a class="brand" href="/"{brand_cur}>{MARK}<span class="name-main">Florida RV Dump Stations</span><span class="name-compact">Dump stations</span></a>'
+        f'<p class="name-sub">Independent guide. Not a government website. <a href="/disclaimer/">Disclaimer</a></p>'
         f'<button type="button" class="search-toggle" aria-expanded="false" aria-controls="site-search">{SEARCH_ICON}<span class="search-toggle-text">Search</span></button>'
         f'<div class="search-wrap" id="site-search"><form class="sitesearch" role="search" action="/find/" method="get">'
         f'<label for="q">Search this guide</label><input id="q" name="q" type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">'
@@ -584,9 +618,7 @@ def page(path,title,body,desc,checked=None,crumbs=None,article=True,faq=None,rob
           f'<p class="disclaimer">{e(DISCLAIMER)}</p><p>Independent, unofficial guide. Not affiliated with Florida State Parks, FDOT, the Florida Department of Health, the Florida Department of Environmental Protection, Love\'s or OpenStreetMap. Official listings are linked to the operator page they came from. Community listings come from OpenStreetMap contributors (data &copy; OpenStreetMap contributors, ODbL)'
           +src('osmc')+f'. Dump stations close, change rules and charge new fees without notice: always call ahead. Last checked: {e(when)}.</p></div></footer>')
     article_html=f'<article class="content" aria-labelledby="page-title"><div class="head-block">{head_html}</div>{layout}</article>'
-    main=(f'<main id="content" tabindex="-1"><div class="shell">{visible_crumbs(path)}'
-          f'<p class="meta"><span class="checked">Last checked: {e(when)}</span></p>'
-          f'<p class="disclaimer">{e(DISCLAIMER)}</p>{article_html}</div></main>')
+    main=(f'<main id="content" tabindex="-1"><div class="shell">{visible_crumbs(path)}{article_html}</div></main>')
     extra_script=('<script>'+MAPJS+'</script>') if 'id="loc-map"' in body else ''
     scripts=f'<script type="application/json" id="search-data">{search_json()}</script><script>{NAV}</script>'+extra_script
     h=''.join(head)+'<body><a class="skip" href="#content">Skip to content</a>'+header+main+foot+scripts+'</body></html>'
@@ -673,23 +705,34 @@ faq=[("Can I dump at a Florida interstate rest area?",f"Not according to any FDO
 ("Are OpenStreetMap entries reliable?",f"They are community data{src('osm')}. Many Florida entries have no name, fee or access tags. We show them so you know where to look, flagged as Community, and they need a phone call to confirm."),
 ("Is there potable water at the dump?","Rarely stated by official sources. Where an OSM contributor tagged water_point we show it as an OSM tag. Never use the rinse hose for drinking water."),
 ("How current is this?",f"Station rows on this page were collected on {D}. The state park dump page was checked on {SP}. Each row links to its source so you can recheck.")]
-SUMMARIES['index.html']=f'{len(recs)} stations on {D}: {noff} confirmed on an official page, {ncom} community-mapped. Confirm with the operator before you drive there.'
-SUMMARIES['fees/index.html']='Most sources do not publish a dump fee. Below are the only fee statements we found, then a summary of access rules.'
+SUMMARIES['index.html']=f'{len(recs)} stations on {D}: {noff} confirmed on an official page, {ncom} community-mapped. Pick a region to find one near you, then confirm with the operator.'
+SUMMARIES['fees/index.html']='Most sources do not state a fee. Anastasia says its station is free for park campers. Two community rows are tagged free. No source here states a free dump station in Fort Lauderdale.'
 SUMMARIES['state-parks/index.html']='The fee schedule says $10 per unit for a non-registered camper. Blue Spring says $10.65. Manatee Springs says its dump station is closed. Other park pages quoted here state who may use the station.'
 SUMMARIES['rules/index.html']='Florida law limits where a recreational vehicle may empty black water, grey water, or any other liquid waste. This is an unofficial reading of the public texts, not legal advice.'
 SUMMARIES['disclaimer/index.html']='Station names, locations, fees, access, hours and legal quotations on this site are taken from the linked public sources. Always confirm with the official source or the facility before you act.'
 SUMMARIES['find/index.html']='Every page on this guide, grouped by topic. Use the search box to narrow the list.'
+REGION_SUM={
+"panhandle":f"{cnt['panhandle']} stations in the Panhandle. Pensacola and Tallahassee are in this region. No row on this page is in those cities. Call ahead.",
+"north":f"{cnt['north']} stations in North Florida. Hawthorne is in Alachua County, the same county as Gainesville. Dunnellon is in Marion County, the same county as Ocala. No row is in Jacksonville. Call ahead.",
+"central":f"{cnt['central']} stations in Central Florida, including Ormond Beach and Bushnell. Call ahead.",
+"tampa-bay-southwest":f"{cnt['tampa-bay-southwest']} stations in Tampa Bay and Southwest Florida, including community rows in Hillsborough County, where Tampa is. Call ahead.",
+"southeast-keys":f"{cnt['southeast-keys']} stations in the Southeast and the Keys. One community row is in Miami-Dade, on Long Pine Key Road. No row names Fort Lauderdale. Call ahead."}
+REGION_KW={
+"panhandle":"pensacola tallahassee escambia leon",
+"north":"gainesville ocala jacksonville dunnellon hawthorne lake city marion alachua",
+"central":"ormond beach bushnell orlando",
+"tampa-bay-southwest":"tampa hillsborough pinellas sarasota fort myers naples",
+"southeast-keys":"miami fort lauderdale broward miami-dade keys dump station miami"}
 for k,(n,_cs) in REG.items():
-    place={'Panhandle':'the Panhandle','Southeast and Keys':'the Southeast and the Keys'}.get(n,n)
-    SUMMARIES[f'regions/{k}/index.html']=f'{cnt[k]} stations in {place}. Each row links to its source. Call ahead.'
+    SUMMARIES[f'regions/{k}/index.html']=REGION_SUM[k]
     rows=[x for x in recs if x['region']==k]
-    KW[f'regions/{k}/index.html']=' '.join(x['name']+' '+x['city']+' '+x['county']+' '+x.get('operator','') for x in rows)
-KW['index.html']=' '.join(c['name'] for c in checked)+' etiquette rest area openstreetmap verification call ahead'
+    KW[f'regions/{k}/index.html']=REGION_KW[k]+' '+' '.join(x['name']+' '+x['city']+' '+x['county']+' '+x.get('operator','') for x in rows)
+KW['index.html']=' '.join(c['name'] for c in checked)+' etiquette rest area openstreetmap verification call ahead near me free miami fort lauderdale gainesville ocala jacksonville tallahassee pensacola tampa'
 KW['rules/index.html']='rest area welcome center litter law statute grey water black water wastewater sanitary dump station health department transportation'
-KW['fees/index.html']='fee access campers loves love state park customers potable water'
+KW['fees/index.html']='fee access campers loves love state park customers potable water free fort lauderdale'
 KW['state-parks/index.html']='state park campers day visitor non-registered fee hours closure koreshan oscar scherer blue spring fort clinch anastasia gamble rogers florida caverns little talbot kissimmee prairie collier seminole manatee springs'
 KW['disclaimer/index.html']='liability warranty affiliation accuracy corrections'
-KW['find/index.html']='index search all pages topics'
+KW['find/index.html']='index search all pages topics near me miami fort lauderdale gainesville ocala tampa pensacola'
 def jump(path, label=None):
     label=label or TITLES[path]
     blurb=SUMMARIES.get(path,'')
@@ -728,8 +771,8 @@ GUIDE=f'''<h2>Start here</h2>
 <h2>All topics</h2>
 <p>Every page on this guide, grouped by topic.</p>
 {topics_html}'''
-body=f'''<h1>Florida RV dump stations: sourced list by region</h1>
-<p>A plain list of places in Florida where an RV can empty black and grey tanks, taken only from operator pages (Florida State Parks, Love's) and OpenStreetMap community data. {len(recs)} stations on {D}: {noff} confirmed on an official page, {ncom} community-mapped.</p>{CALL}
+body=f'''<h1>RV dump station near me in Florida</h1>
+<p>A plain list of places in Florida where an RV can empty black and grey tanks, taken only from operator pages (Florida State Parks, Love's) and OpenStreetMap. The regions cover Pensacola, Tallahassee, Jacksonville, Gainesville, Ocala, Tampa, Fort Lauderdale and Miami. A city is named on a station row only when a source names it.</p>{CALL}
 {GUIDE}
 <h2>How to use a dump station</h2><div class="card"><ol><li>Pull up so your sewer outlet is on the drain side. Set the parking brake.</li><li>Wear disposable gloves. Connect the sewer hose to your outlet first, then put the other end fully into the drain inlet and secure it.</li><li>Open the black tank valve first and let it empty completely.</li><li>Close it, then open the grey tank valve. Grey water helps flush the hose.</li><li>Close the valves, rinse the hose with the non-potable rinse water if provided, and drain it into the inlet.</li><li>Disconnect at the RV end first, rinse the area, and close the drain lid.</li></ol>
 <p class="src">General practice guidance, not from a single official source. Always follow posted signs at the station.</p></div>
@@ -738,16 +781,29 @@ body=f'''<h1>Florida RV dump stations: sourced list by region</h1>
 <h2>Checked, no dump station stated</h2><div class="card"><ul>'''+''.join(f'<li><strong>{H.escape(c["name"])}</strong>: {H.escape(c["note"])} <span class="src">[<a href="{c["source"]}" rel="noopener">source</a>]</span></li>' for c in checked)+'''</ul></div>
 <h2>Short FAQ</h2>'''+''.join(f'<div class="card"><strong>{q}</strong><p>{a}</p></div>' for q,a in faq)
 if os.path.exists(OUT): shutil.rmtree(OUT)
-page('index.html',"All Florida RV dump stations by region, with sources",body,"Florida RV dump stations from Florida State Parks, Love's and OpenStreetMap, listed by region, with fees, access, verification level and links to each source.",crumbs=[("Home",BASE+"/")],faq=faq)
+page('index.html',"RV dump station near me in Florida, checked sources",body,"Find an RV dump station near you in Florida. Lists from Florida State Parks, Love's and OpenStreetMap, with fees, access and a link to each source.",crumbs=[("Home",BASE+"/")],faq=faq)
+REGION_H1={
+"panhandle":"RV dump stations in the Florida Panhandle",
+"north":"RV dump stations near Gainesville and Ocala",
+"central":"RV dump stations in Central Florida",
+"tampa-bay-southwest":"RV dump stations near Tampa and Southwest Florida",
+"southeast-keys":"RV dump stations in Miami-Dade and the Keys"}
+REGION_LEAD={
+"panhandle":"Pensacola is in Escambia County and Tallahassee is in Leon County. Both counties are in this region. No station row on this page is in Pensacola or Tallahassee.",
+"north":"Hawthorne is in Alachua County, the same county as Gainesville. Dunnellon and Salt Springs are in Marion County, the same county as Ocala. Jacksonville is in Duval County, which is also in this region. No station row on this page is in the city of Gainesville, Ocala, or Jacksonville.",
+"central":"Rows on this page include Ormond Beach and Bushnell. Orlando is in Orange County, which is in this region. No station row on this page is in Orlando.",
+"tampa-bay-southwest":"Tampa is in Hillsborough County. This page includes community-mapped stations in Hillsborough and Pinellas, plus stations farther south.",
+"southeast-keys":"Miami is in Miami-Dade County. Fort Lauderdale is in Broward County. Both counties are in this region. The Miami-Dade row is a community point on Long Pine Key Road. No station row on this page names Fort Lauderdale."}
 REGION_SEO={
-"panhandle":("RV dump stations in the Florida Panhandle, sourced","Sourced RV dump stations in the Florida Panhandle, with fees, access, potable water, hours and links to operator pages or OpenStreetMap."),
-"north":("Sourced RV dump stations in North Florida, with fees","Sourced RV dump stations in North Florida, with fees, access, potable water, hours and links to operator pages or OpenStreetMap."),
-"central":("Sourced RV dump stations in Central Florida, with fees","Sourced RV dump stations in Central Florida, with fees, access, potable water, hours and links to operator pages or OpenStreetMap."),
-"tampa-bay-southwest":("RV dump stations in Tampa Bay and Southwest, Florida","Sourced RV dump stations in Tampa Bay and Southwest Florida, with fees, access, potable water, hours and links to operator pages or OpenStreetMap."),
-"southeast-keys":("RV dump stations in the Southeast and Keys, Florida","Sourced RV dump stations in the Southeast and the Keys, with fees, access, potable water, hours and links to operator pages or OpenStreetMap.")}
+"panhandle":("RV dump stations in the Florida Panhandle, sourced","RV dump stations in the Florida Panhandle, with fees and access. Pensacola and Tallahassee are in this region. Each row links to its source."),
+"north":("RV dump stations near Gainesville and Ocala, Florida","RV dump stations near Gainesville and Ocala, including Hawthorne, Dunnellon and Lake City. Jacksonville is in this region. Source links on every row."),
+"central":("RV dump stations in Central Florida, with source links","RV dump stations in Central Florida, including Ormond Beach and Bushnell, with fees, access, hours and a link to each operator or OpenStreetMap source."),
+"tampa-bay-southwest":("RV dump stations near Tampa and in Southwest Florida","RV dump stations near Tampa and in Southwest Florida, with fees, access and source links. Hillsborough, Pinellas, Sarasota, Lee and Collier are included."),
+"southeast-keys":("RV dump stations in Miami-Dade and the Florida Keys","Dump stations near Miami and in the Florida Keys, with fees and access. Fort Lauderdale is in this region. Each row links to its source.")}
 for k,(n,cs) in REG.items():
     rows=[x for x in recs if x['region']==k]
-    b=f'<h1>RV dump stations: {n}</h1><p>{len(rows)} stations. Counties in this region: {", ".join(c.replace("_"," ") for c in cs.split())}.</p>{CALL}'+table(rows)+station_map(rows,n)+LEVELS+'<p><a href="/">All regions</a> | <a href="/fees/">Fees</a> | <a href="/state-parks/">State park dumps</a> | <a href="/rules/">Dumping rules</a></p>'
+    counties=", ".join(c.replace("_"," ") for c in cs.split())
+    b=f'<h1>{REGION_H1[k]}</h1><p>{len(rows)} stations. Counties in this region: {counties}. {REGION_LEAD[k]}</p>{CALL}'+table(rows)+station_map(rows,n)+LEVELS+'<p><a href="/">All regions</a> | <a href="/fees/">Fees</a> | <a href="/state-parks/">State park dumps</a> | <a href="/rules/">Dumping rules</a></p>'
     rt,rd=REGION_SEO[k]
     page(f'regions/{k}/index.html',rt,b,rd,crumbs=[("Home",BASE+"/"),(n,BASE+f"/regions/{k}/")])
 fr=[x for x in recs if x['fee']!='Not stated by source']
@@ -762,7 +818,7 @@ if fee_missing:
 fee_label=f"Map of {len(fee_pts)} RV dump stations whose source states a fee. The table is the full list. Base map from OpenStreetMap."
 MAP_REPORT.append(("Fees",len(fr),len(fee_pts)))
 fee_map=map_html(fee_pts,"Map of stations on this page",fee_label,fee_note)
-fb=f'''<h1>Florida RV dump station fees and access</h1><p>Most sources do not publish a dump fee. Below are the only fee statements we found, then a summary of access rules.</p>{CALL}
+fb=f'''<h1>Free RV dump stations in Florida, and stated fees</h1><p>Most sources do not publish a dump fee. Anastasia State Park says its dump station is free for park campers. Two community rows are tagged fee=no. No source on this page states a free RV dump station in Fort Lauderdale. Below are the only fee statements we found, then a summary of access rules.</p>{CALL}
 <h2>Fees that a source states</h2><div class="wrap"><table><tr><th scope="col">Station</th><th scope="col">County</th><th scope="col">Fee</th><th scope="col">Who can use it</th><th scope="col">Verification</th></tr>'''+''.join(f'<tr id="loc-{H.escape(str(x["id"]))}"><td>{H.escape(x["name"])} {directions_link(x.get("directions_address"), x["name"])}</td><td>{x["county"]}</td><td>{H.escape(x["fee"])}</td><td>{H.escape(x["access"])}</td><td>{x["level"]} <span class="src">[<a href="{x["source"]}" rel="noopener">source</a>]</span></td></tr>' for x in fr)+f'''</table></div>
 <p>{len(recs)-len(fr)} of {len(recs)} stations: fee not stated by source.</p>
 {fee_map}
@@ -772,7 +828,7 @@ fb=f'''<h1>Florida RV dump station fees and access</h1><p>Most sources do not pu
 <li>FDOT rest areas: no dump stations stated{src('fdot')}.</li>
 <li>OpenStreetMap access tags: {sum(1 for x in recs if x['access'].startswith('Customers'))} customers only, {sum(1 for x in recs if x['access'].startswith('Public'))} public, rest not stated{src('osm')}.</li></ul></div>
 <p>For the statute and the Department of Health rule on where a tank may be emptied, see <a href="/rules/">where you can and cannot dump</a>. For who may use a state park station, see <a href="/state-parks/">state park dump stations</a>.</p>'''
-page('fees/index.html',"Florida RV dump station fees and access, with sources",fb,"Which Florida RV dump stations state a fee, who may use them, and how access is described on operator pages and OpenStreetMap tags.",crumbs=[("Home",BASE+"/"),("Fees",BASE+"/fees/")])
+page('fees/index.html',"Free RV dump stations in Florida, plus stated fees",fb,"Free RV dump stations in Florida only where a source says free, plus every stated fee. No source here names a free dump station in Fort Lauderdale.",crumbs=[("Home",BASE+"/"),("Fees",BASE+"/fees/")])
 sp_pts=[]
 for item in STATE_PARKS:
     g=PLACES[item['place']]
@@ -789,7 +845,7 @@ sp_note=(f"The text on this page names {len(STATE_PARKS)} parks. The map is an e
 sp_label=f"Map of {len(sp_pts)} Florida State Parks named on this page. The text is the full information. Base map from OpenStreetMap."
 MAP_REPORT.append(("State park dumps",len(STATE_PARKS),len(sp_pts)))
 state_park_map=map_html(sp_pts,"Map of parks on this page",sp_label,sp_note)
-sp=f'''<h1>Who may use a Florida State Park dump station</h1>
+sp=f'''<h1>Florida State Park RV dump stations: fees and access</h1>
 <p>This page quotes Florida State Parks pages that say who may use a dump station, what a person who is not a registered camper pays, or that a station is closed. It is not a list of every state park dump station. A page that only says a station exists is not given a row. The quoted rules on this page do not use OpenStreetMap or any other community listing.</p>
 {CALL}
 <h2>What the fee schedule says</h2>
@@ -876,6 +932,20 @@ sp=f'''<h1>Who may use a Florida State Park dump station</h1>
 <p id="loc-park-manatee">Manatee Springs State Park, 11650 N.W. 115 St. Chiefland FL 32626. {park_dirs('manatee', False)} Phone 352-493-6072. The park page lists the hours as 8 a.m. to sunset, 365 days a year.{src('manateehome')}</p>
 <p>That page says the waterfront restroom and dump station are currently closed, effective Jan. 14, 2026. The amenities page still says a dump station is provided for the Magnolia 2 and Hickory loops, which have no sewer hookup, and it does not say who may use it. Read both pages before you drive there. The two statements are also in the section above.{src('manateehome','manatee')}</p>
 </div>
+<h2>Photographs of parks named on this page</h2>
+<p>These photographs show the park. They do not show the dump station. Words on a sign are what that sign said when the photograph was taken. They are not a current hours notice or a current award.</p>
+<figure class="photo">
+<img src="/photos/anastasia-state-park-sign.webp" width="1200" height="900" alt="Wooden entrance sign reading Anastasia State Park, with palm trees and a smaller Florida State Parks National Gold Medal Winner sign beside the road.">
+<figcaption>Anastasia State Park entrance sign, photographed on 12 March 2004. This photograph does not show the dump station. Photo by S. Clyde, <a href="https://www.archives.gov/" rel="noopener">U.S. National Archives</a>. <a href="https://commons.wikimedia.org/wiki/File:A1A_Scenic_and_Historic_Coastal_Byway_-_Greetings_from_Anastasia_State_Park_-_NARA_-_7716676.jpg" rel="noopener">Public domain</a>.</figcaption>
+</figure>
+<figure class="photo">
+<img src="/photos/tomoka-state-park-sign.webp" width="1200" height="675" alt="Brown roadside sign reading Entering Tomoka State Park, open 8:00 am until sunset, with a small plaque for 2099 North Beach Street.">
+<figcaption>Tomoka State Park entrance sign on North Beach Street in Ormond Beach, photographed on 22 October 2008. This photograph does not show the dump station. <a href="https://www.archives.gov/" rel="noopener">U.S. National Archives</a>. The archive note names Andy Nicol, TranSystems. <a href="https://commons.wikimedia.org/wiki/File:Ormond_Scenic_Loop_%26_Trail_-_Entering_Tomoka_State_Park_Sign_-_NARA_-_7720838.jpg" rel="noopener">Public domain</a>.</figcaption>
+</figure>
+<figure class="photo">
+<img src="/photos/myakka-river-state-park-trail.webp" width="960" height="720" alt="A sandy footpath through palms and other trees at Myakka River State Park.">
+<figcaption>A trail at Myakka River State Park, photographed on 27 April 2023. This photograph does not show the dump station. Photo by <a href="https://commons.wikimedia.org/wiki/User:Mx._Granger" rel="noopener">Mx. Granger</a>, <a href="https://creativecommons.org/publicdomain/zero/1.0/" rel="noopener">CC0</a>, via <a href="https://commons.wikimedia.org/wiki/File:Trail_in_Myakka_River_State_Park.jpg" rel="noopener">Wikimedia Commons</a>.</figcaption>
+</figure>
 {state_park_map}
 <h2>What these pages do not say</h2>
 <div class="card">
@@ -907,7 +977,7 @@ sp=f'''<h1>Who may use a Florida State Park dump station</h1>
 <li><a href="{S['manateehome']}" rel="noopener">Manatee Springs park page</a> and <a href="{S['manatee']}" rel="noopener">amenities</a></li>
 </ul></div>
 <p><a href="/fees/">Fees and access</a> | <a href="/rules/">Dumping rules</a> | <a href="/">Stations by region</a></p>'''
-page('state-parks/index.html',"Florida State Park dump stations: access, fees, hours",sp,"Who may use a Florida State Park RV dump station, the published fee for a non-registered camper, and park pages that state another amount or a closure.",SP,crumbs=[("Home",BASE+"/"),("State park dumps",BASE+"/state-parks/")])
+page('state-parks/index.html',"Florida State Park RV dump stations: fees and access",sp,"Who may use a Florida State Park RV dump station, the fee for a non-registered camper, and park pages that state another amount or a closure.",SP,crumbs=[("Home",BASE+"/"),("State park dumps",BASE+"/state-parks/")])
 RULES_D="26 October 2026"
 rb=f"""<h1>Where you can and cannot dump RV waste in Florida</h1>
 <p>Florida law limits where a recreational vehicle may empty black water, grey water, or any other liquid waste. This page quotes the statute, the Department of Health park rule, the Florida Litter Law, the sanitary-nuisance statute, the pollution statute, and the FDOT rest-area rule. It is an unofficial reading of those public texts, not legal advice and not a statement by any agency. Read the linked sections.</p>
@@ -997,8 +1067,8 @@ find_bits=['<h2>Home</h2><ul class="topic-list"><li data-keywords="'+H.escape(KW
 for g,items in GROUPS:
     lis=''.join(f'<li data-keywords="{H.escape(KW.get(p,""))}">{jump(p)}</li>' for p,_t in items)
     find_bits.append(f'<h2>{H.escape(g)}</h2><ul class="topic-list">{lis}</ul>')
-find_body='<h1>All pages</h1><p>Every page on this guide, grouped by topic. Use the search box to narrow this list. Clear the search to show every page.</p><p id="index-status" class="index-status" role="status">Showing every page.</p>'+''.join(find_bits)
-page('find/index.html',"Find every page in this Florida RV dump station guide",find_body,"Search and browse every page in this independent Florida RV dump station guide, grouped by topic, including regions, fees, rules and the disclaimer.",crumbs=[("Home",BASE+"/"),("All pages",BASE+"/find/")])
+find_body='<h1>Find an RV dump station page</h1><p>Every page on this guide, grouped by topic. Use the search box to narrow this list. Clear the search to show every page.</p><p id="index-status" class="index-status" role="status">Showing every page.</p>'+''.join(find_bits)
+page('find/index.html',"Find every RV dump station page in this Florida guide",find_body,"Search this Florida RV dump station guide for a station near you, including Miami, Fort Lauderdale, Gainesville, Ocala, Tampa and the Panhandle.",crumbs=[("Home",BASE+"/"),("All pages",BASE+"/find/")])
 nb='''<h1>Page not found</h1>
 <p>That address is not a page on this guide.</p>
 <ul class="grid">
